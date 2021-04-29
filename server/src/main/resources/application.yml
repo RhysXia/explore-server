@@ -1,0 +1,9 @@
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://nas.8910.xyz:4000/blog
+    username: root
+    password: root
+
+logging:
+  me.rhyaxia.blog.server:
+    level: debug
