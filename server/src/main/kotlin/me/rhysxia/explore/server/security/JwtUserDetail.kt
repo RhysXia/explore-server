@@ -1,4 +1,4 @@
-package me.rhysxia.niemandsland.server.security
+package me.rhysxia.explore.server.security
 
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails

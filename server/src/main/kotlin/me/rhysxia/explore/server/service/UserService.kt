@@ -1,7 +1,7 @@
-package me.rhysxia.niemandsland.server.service
+package me.rhysxia.explore.server.service
 
 import kotlinx.coroutines.flow.Flow
-import me.rhysxia.niemandsland.server.po.UserPo
+import me.rhysxia.explore.server.po.UserPo
 
 interface UserService {
     fun findAll(): Flow<UserPo>
