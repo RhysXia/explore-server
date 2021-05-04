@@ -1,8 +1,12 @@
-package me.rhysxia.niemandsland.server.po
+package me.rhysxia.explore.server.po
 
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Table
 import java.util.*
 
+@Table("sys_role")
 data class RolePo(
+  @Id
   val id: Long?,
   /**
    * 描述

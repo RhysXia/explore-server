@@ -1,6 +1,6 @@
-package me.rhysxia.niemandsland.server.controller
+package me.rhysxia.explore.server.controller
 
-import me.rhysxia.niemandsland.server.service.UserService
+import me.rhysxia.explore.server.service.UserService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
