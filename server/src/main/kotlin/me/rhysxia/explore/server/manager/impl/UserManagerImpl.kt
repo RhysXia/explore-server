@@ -11,4 +11,8 @@ class UserManagerImpl(private val userRepository: UserRepository) : UserManager 
   override fun findAll(): Flow<UserPo> {
     return userRepository.findAll()
   }
+
+  override suspend fun findOneByUsername(username: String): UserPo? {
+    return userRepository.findOneByUsername(username)
+  }
 }

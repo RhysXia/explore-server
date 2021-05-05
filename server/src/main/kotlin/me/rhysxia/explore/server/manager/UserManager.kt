@@ -5,4 +5,6 @@ import me.rhysxia.explore.server.po.UserPo
 
 interface UserManager {
   fun findAll(): Flow<UserPo>
+  suspend fun findOneByUsername(username: String): UserPo?
+
 }
