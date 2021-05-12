@@ -1,26 +1,28 @@
 package me.rhysxia.explore.server.controller
 
 import graphql.ExecutionInput
-import graphql.GraphQL
+import graphql.schema.GraphQLInputType
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-data class QueryData(val query: String?, val operationName: String?, val variables: MutableMap<String, Any>)
+data class GraphqlRequestEntity(
+  val query: String?,
+  val variables: MutableMap<String, Any>,
+  val operationName: String?
+)
 
 @RestController
-@RequestMapping("/graphql")
-class GraphqlController(private val graphQL: GraphQL) {
+class GraphqlController {
 
-  @PostMapping
+  @PostMapping("/graphql")
   fun query(
-    @RequestBody(required = false) body: QueryData,
-  ): Any {
-    val input =
-      ExecutionInput.newExecutionInput(body.query).variables(body.variables).operationName(body.operationName)
-        .build()
-    val result = graphQL.execute(input)
-    return result
+    @RequestBody entity: GraphqlRequestEntity
+  ) {
+    val input = ExecutionInput.newExecutionInput()
+      .query(entity.query)
+      .operationName(entity.operationName)
+      .variables(entity.variables)
+      .build()
   }
 }

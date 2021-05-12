@@ -1,14 +1,8 @@
-server:
-  servlet:
-    context-path: /api
 spring:
-  profiles:
-    active: dev
-  banner:
-    location:
-      banner.txt
   r2dbc:
     pool:
       enabled: true
       max-size: 10
       initial-size: 4
+  profiles:
+    active: dev
