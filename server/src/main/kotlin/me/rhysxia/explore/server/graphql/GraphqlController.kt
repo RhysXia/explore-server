@@ -1,8 +1,7 @@
-package me.rhysxia.explore.server.controller
+package me.rhysxia.explore.server.graphql
 
 import graphql.ExecutionInput
 import graphql.GraphQL
-import me.rhysxia.explore.server.graphql.GraphqlBatchLoader
 import org.dataloader.DataLoader
 import org.dataloader.DataLoaderRegistry
 import org.springframework.web.bind.annotation.PostMapping
