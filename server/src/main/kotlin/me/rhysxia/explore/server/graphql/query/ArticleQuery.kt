@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql
+package me.rhysxia.explore.server.graphql.query
 
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsData
@@ -17,7 +17,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @DgsComponent
-class ArticleSchema(private val tagService: TagService, private val commentService: CommentService) {
+class ArticleQuery(private val tagService: TagService, private val commentService: CommentService) {
   @DgsData(parentType = "Article", field = "category")
   fun category(
     dfe: DgsDataFetchingEnvironment

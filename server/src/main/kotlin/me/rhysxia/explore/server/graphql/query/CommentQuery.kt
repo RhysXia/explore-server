@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql
+package me.rhysxia.explore.server.graphql.query
 
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsData
@@ -19,7 +19,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @DgsComponent
-class CommentSchema(private val commentService: CommentService) {
+class CommentQuery(private val commentService: CommentService) {
   @DgsData(parentType = "Comment", field = "author")
   fun author(dfe: DgsDataFetchingEnvironment): CompletableFuture<UserPo> {
     val commentPo = dfe.getSource<CommentPo>()

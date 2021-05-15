@@ -14,6 +14,10 @@ data class UserPo(
   val avatar: String?,
   val email: String?,
   /**
+   * 状态
+   */
+  val status: UserStatus,
+  /**
    * 个人简介
    */
   val bio: String?,

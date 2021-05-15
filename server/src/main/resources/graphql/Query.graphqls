@@ -1,0 +1,16 @@
+type Query {
+    """文章分类列表，支持分页排序"""
+    categories(page: Page!): [Category!]!
+    """文章分类总数"""
+    categoryCount: Int!
+    """文章标签列表，支持分页排序"""
+    tags(page: Page!): [Tag!]!
+    """文章标签总数"""
+    tagCount: Int!
+    """指定id的文章"""
+    article(id: Int!): Article
+    """指定id的分类"""
+    category(id: Int!): Category
+    """指定id的标签"""
+    tag(id: Int!): Tag
+}
