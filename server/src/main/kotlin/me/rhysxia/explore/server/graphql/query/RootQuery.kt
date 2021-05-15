@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql
+package me.rhysxia.explore.server.graphql.query
 
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsData
@@ -19,7 +19,7 @@ import me.rhysxia.explore.server.service.TagService
 import java.util.concurrent.CompletableFuture
 
 @DgsComponent
-class QuerySchema(
+class RootQuery(
   private val categoryService: CategoryService,
   private val tagService: TagService
 ) {

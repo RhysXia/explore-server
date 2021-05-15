@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql
+package me.rhysxia.explore.server.graphql.query
 
 import com.netflix.graphql.dgs.DgsComponent
 import com.netflix.graphql.dgs.DgsData
@@ -16,7 +16,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @DgsComponent
-class CategorySchema(private val articleService: ArticleService) {
+class CategoryQuery(private val articleService: ArticleService) {
   @DgsData(parentType = "Category", field = "articleCount")
   fun articleCount(dfe: DgsDataFetchingEnvironment): CompletableFuture<Long> {
     val future = CompletableFuture<Long>()

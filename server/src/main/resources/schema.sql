@@ -21,6 +21,7 @@ CREATE TABLE sys_user
     nickname      VARCHAR(50) NOT NULL,
     avatar        VARCHAR(255),
     email         VARCHAR(255),
+    status        VARCHAR(20) NOT NULL,
     bio           TEXT,
     created_at    TIMESTAMP   NOT NULL,
     updated_at    TIMESTAMP   NOT NULL,

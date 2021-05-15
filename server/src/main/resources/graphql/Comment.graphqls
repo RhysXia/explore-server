@@ -1,0 +1,22 @@
+"""文章评论，评论支持嵌套"""
+type Comment {
+    id: Int!,
+    """评论内容"""
+    content: String!,
+    """评论内容类型"""
+    contentType: ContentType!,
+    """创建时间"""
+    createdAt: Timestamp!,
+    """更新时间"""
+    updatedAt: Timestamp!,
+    """作者"""
+    author: User!
+    """对应的文章"""
+    article: Article!,
+    """父级评论"""
+    parent: Comment,
+    """下级评论，仅直接下级，支持分页排序"""
+    children(page: Page!): [Comment!]!,
+    """下级评论综述，仅直接下级"""
+    childrenCount: Int!
+}
