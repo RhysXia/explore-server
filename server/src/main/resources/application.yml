@@ -6,3 +6,6 @@ spring:
       initial-size: 4
   profiles:
     active: dev
+dgs:
+  graphql:
+    schema-locations: classpath*:/graphql/**.graphqls
