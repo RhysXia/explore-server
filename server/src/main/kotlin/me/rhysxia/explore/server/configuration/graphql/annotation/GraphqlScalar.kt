@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql.annotation
+package me.rhysxia.explore.server.configuration.graphql.annotation
 
 import org.springframework.stereotype.Component
 
@@ -6,4 +6,6 @@ import org.springframework.stereotype.Component
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Component
-annotation class GraphqlFetcher()
+annotation class GraphqlScalar(
+  val name: String
+)

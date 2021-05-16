@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql.annotation
+package me.rhysxia.explore.server.configuration.graphql.annotation
 
 import org.springframework.stereotype.Component
 
