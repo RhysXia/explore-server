@@ -19,23 +19,20 @@ configurations {
 
 repositories {
   mavenCentral()
-  maven {
-    url = uri("https://netflixoss.jfrog.io/artifactory/maven-oss-candidates/")
-  }
 }
 
 dependencies {
-  implementation("com.netflix.graphql.dgs:graphql-dgs-webflux-starter:4.0.0-rc.1")
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+  implementation("org.jetbrains.kotlin:kotlin-reflect")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
   implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
   implementation("org.springframework.boot:spring-boot-starter-mail")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-  implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-  implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
+  implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  implementation("com.graphql-java:graphql-java:16.2")
   runtimeOnly("io.r2dbc:r2dbc-postgresql")
   runtimeOnly("org.postgresql:postgresql")
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
