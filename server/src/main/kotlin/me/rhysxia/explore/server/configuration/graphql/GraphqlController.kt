@@ -20,15 +20,13 @@ data class GraphqlRequestBody(
 )
 
 @RestController
-class GraphqlController {
+class GraphqlController(private val graphql: GraphQL, loaders: List<BatchLoader<*, *>>) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
 
-    private val graphql: GraphQL
     private val loaders: Map<String, BatchLoader<*, *>>
 
-    constructor(graphql: GraphQL, loaders: List<BatchLoader<Any, Any>>) {
-        this.graphql = graphql
+    init {
         this.loaders = loaders.mapNotNull {
             val graphqlLoader = it.javaClass.getAnnotation(GraphqlLoader::class.java)
             if (graphqlLoader === null) {
@@ -49,10 +47,9 @@ class GraphqlController {
             }
             name to it
         }.fold(HashMap<String, BatchLoader<*, *>>()) { a, b ->
-            a.put(b.first, b.second)
+            a[b.first] = b.second
             a
         }
-
     }
 
     @PostMapping("/graphql")
