@@ -1,18 +1,17 @@
 package me.rhysxia.explore.server.graphql.query
 
-import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlData
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlFetcher
 import me.rhysxia.explore.server.po.CategoryPo
-import java.util.concurrent.CompletableFuture
+import me.rhysxia.explore.server.service.CategoryService
+import org.springframework.data.domain.Pageable
 
 @GraphqlData("Query")
-class RootQuery {
+class RootQuery(private val categoryService: CategoryService) {
 
   @GraphqlFetcher
-  fun categories(ctx: DataFetchingEnvironment): Flow<CategoryPo> {
-    return emptyList<CategoryPo>().asFlow()
+  fun categories(pageable: Pageable): Flow<CategoryPo> {
+    return categoryService.findAllBy(pageable)
   }
 }

@@ -1,6 +1,6 @@
 type Query {
     """文章分类列表，支持分页排序"""
-    categories(page: Page!): [Category!]!
+    categories(offset: Int = 0, limit: Int = 10): [Category!]!
     """文章分类总数"""
     categoryCount: Int!
     """文章标签列表，支持分页排序"""
