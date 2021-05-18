@@ -10,10 +10,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlData
-import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlFetcher
-import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlInput
-import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlScalar
+import me.rhysxia.explore.server.configuration.graphql.annotation.*
+import org.dataloader.BatchLoader
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -30,141 +28,195 @@ import kotlin.coroutines.Continuation
 @Configuration
 class GraphqlConfiguration {
 
-  private val logger = LoggerFactory.getLogger(this.javaClass)
+    private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  private val schemaLocation = "classpath*:/graphql/**/*.graphql*"
+    private val schemaLocation = "classpath*:/graphql/**/*.graphql*"
 
-  fun getSchemaFiles(): Array<Resource> {
-    val loader = Thread.currentThread().contextClassLoader
+    fun getSchemaFiles(): Array<Resource> {
+        val loader = Thread.currentThread().contextClassLoader
 
-    val pathMatchingResourcePatternResolver = PathMatchingResourcePatternResolver(loader)
-    val schema = try {
-      pathMatchingResourcePatternResolver.getResources(this.schemaLocation)
-    } catch (e: Exception) {
-      emptyArray()
-    }
-    return schema
-  }
-
-
-  @Bean
-  fun graphQLCodeRegistry(ctx: ApplicationContext): GraphQLCodeRegistry {
-    val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
-    ctx.getBeansWithAnnotation(GraphqlData::class.java).forEach {
-      val bean = it.value
-      val rootParentType = bean.javaClass.getAnnotation(GraphqlData::class.java).parentType
-      bean::class.java.methods.forEach { method ->
-        val graphqlFetcher = method.getDeclaredAnnotation(GraphqlFetcher::class.java)
-        if (graphqlFetcher === null) {
-          return@forEach
+        val pathMatchingResourcePatternResolver = PathMatchingResourcePatternResolver(loader)
+        return try {
+            pathMatchingResourcePatternResolver.getResources(this.schemaLocation)
+        } catch (e: Exception) {
+            emptyArray()
         }
-        val parentType = graphqlFetcher.parentType.ifBlank { rootParentType }
-        val fieldName = graphqlFetcher.fieldName.ifBlank { method.name }
-        if (parentType.isBlank()) {
-          logger.error(
-            "GraphqlFetcher '%s' should have a parentType, but be blank.",
-            method.javaClass.canonicalName
-          )
+    }
+
+    @Bean
+    fun batchLoaderMap(
+        batchLoaders: List<BatchLoader<*, *>>,
+        graphqlBatchLoaders: List<GraphqlBatchLoader<*, *>>,
+    ): MutableMap<String, BatchLoader<Any, Any>> {
+        val pair1 = graphqlBatchLoaders.mapNotNull { graphqlBatchLoader ->
+            val graphqlLoader = graphqlBatchLoader.javaClass.getAnnotation(GraphqlLoader::class.java)
+            if (graphqlLoader === null) {
+                return@mapNotNull null
+            }
+            val name = graphqlLoader.name
+            if (name.isBlank()) {
+                logger.debug(
+                    "BatchLoader '%s' should has a name, but be blank.",
+                    graphqlBatchLoader.javaClass.canonicalName
+                )
+                return@mapNotNull null
+            }
+            val loader = BatchLoader<Any, Any> {
+                val future = CompletableFuture<MutableList<Any?>>()
+
+                GlobalScope.launch {
+                    val list = LinkedList<Any?>()
+                    graphqlBatchLoader.load(it as List<Nothing>).collect {
+                        list.add(it!!)
+                    }
+                    future.complete(list)
+                }
+
+                future
+            }
+            name to loader
         }
-        val last = method.parameters.lastOrNull()
-        val isSuspend = if (last !== null) last.type.isAssignableFrom(Continuation::class.java) else false
 
-        val isFlow = method.returnType.isAssignableFrom(Flow::class.java)
-
-        codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher {
-          val parameters = if (isSuspend) method.parameters.sliceArray(IntRange(0, -1)) else method.parameters
-          val args = parameters.map { parameter ->
-            val type = parameter.type
-            if (type.isAssignableFrom(DataFetchingEnvironment::class.java)) {
-              return@map it
+        val pair2 = batchLoaders.mapNotNull { batchLoader ->
+            val graphqlLoader = batchLoader.javaClass.getAnnotation(GraphqlLoader::class.java)
+            if (graphqlLoader === null) {
+                return@mapNotNull null
             }
-            val graphqlInput = parameter.getDeclaredAnnotation(GraphqlInput::class.java)
-            val name = if (graphqlInput === null) parameter.name else graphqlInput.name
-            it.getArgument(name)
-          }
-
-
-          if (isSuspend) {
-            val future = CompletableFuture<Any>()
-            GlobalScope.launch {
-              val result = method.invoke(bean, *args.toTypedArray(), this)
-              future.complete(result)
+            val name = graphqlLoader.name
+            if (name.isBlank()) {
+                logger.debug(
+                    "BatchLoader '%s' should has a name, but be blank.",
+                    batchLoader.javaClass.canonicalName
+                )
+                return@mapNotNull null
             }
-            return@DataFetcher future
-          }
+            name to batchLoader
+        }
 
-          val result = method.invoke(bean, *args.toTypedArray()) as Flow<*>
-
-          if (isFlow) {
-            val future = CompletableFuture<Any>()
-            GlobalScope.launch {
-              val list = LinkedList<Any>()
-              result.collect {
-                list.add(result)
-              }
-              future.complete(list)
-            }
-            return@DataFetcher future
-          }
-          return@DataFetcher result
-        })
-      }
+        return (pair1 + pair2).fold(HashMap<String, BatchLoader<Any, Any>>()) { a, b ->
+            a[b.first] = b.second as BatchLoader<Any, Any>
+            a
+        }
     }
 
-    return codeRegistry.build()
-  }
+    @Bean
+    fun graphQLCodeRegistry(ctx: ApplicationContext): GraphQLCodeRegistry {
+        val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
+        ctx.getBeansWithAnnotation(GraphqlData::class.java).forEach {
+            val bean = it.value
+            val rootParentType = bean.javaClass.getAnnotation(GraphqlData::class.java).parentType
+            bean::class.java.methods.forEach { method ->
+                val graphqlFetcher = method.getDeclaredAnnotation(GraphqlFetcher::class.java)
+                if (graphqlFetcher === null) {
+                    return@forEach
+                }
+                val parentType = graphqlFetcher.parentType.ifBlank { rootParentType }
+                val fieldName = graphqlFetcher.fieldName.ifBlank { method.name }
+                if (parentType.isBlank()) {
+                    logger.error(
+                        "GraphqlFetcher '%s' should have a parentType, but be blank.",
+                        method.javaClass.canonicalName
+                    )
+                }
+                val last = method.parameters.lastOrNull()
+                val isSuspend = if (last !== null) last.type.isAssignableFrom(Continuation::class.java) else false
 
-  @Bean
-  fun scalars(coercings: List<Coercing<*, *>>): List<GraphQLScalarType> {
-    return coercings.mapNotNull {
-      val graphqlScalar = it::class.java.getAnnotation(GraphqlScalar::class.java)
+                val isFlow = method.returnType.isAssignableFrom(Flow::class.java)
 
-      if (graphqlScalar === null) {
-        logger.debug(
-          "Bean '%s' does not have annotation '%s'.",
-          it.javaClass.canonicalName,
-          GraphqlScalar::class.java.canonicalName
-        )
-        return@mapNotNull null
-      }
+                codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher {
+                    val parameters = if (isSuspend) method.parameters.sliceArray(IntRange(0, -1)) else method.parameters
+                    val args = parameters.map { parameter ->
+                        val type = parameter.type
+                        if (type.isAssignableFrom(DataFetchingEnvironment::class.java)) {
+                            return@map it
+                        }
+                        val graphqlInput = parameter.getDeclaredAnnotation(GraphqlInput::class.java)
+                        val name = if (graphqlInput === null) parameter.name else graphqlInput.name
+                        it.getArgument(name)
+                    }
 
-      val name = graphqlScalar.name
 
-      if (name.isBlank()) {
-        logger.error("Bean '%s' should has a name, but be blank.", it.javaClass.canonicalName)
-        return@mapNotNull null
-      }
+                    if (isSuspend) {
+                        val future = CompletableFuture<Any>()
+                        GlobalScope.launch {
+                            val result = method.invoke(bean, *args.toTypedArray(), this)
+                            future.complete(result)
+                        }
+                        return@DataFetcher future
+                    }
 
-      GraphQLScalarType.newScalar()
-        .name(name)
-        .coercing(it)
-        .build()
+                    val result = method.invoke(bean, *args.toTypedArray()) as Flow<*>
+
+                    if (isFlow) {
+                        val future = CompletableFuture<Any>()
+                        GlobalScope.launch {
+                            val list = LinkedList<Any>()
+                            result.collect {
+                                list.add(result)
+                            }
+                            future.complete(list)
+                        }
+                        return@DataFetcher future
+                    }
+                    return@DataFetcher result
+                })
+            }
+        }
+
+        return codeRegistry.build()
     }
 
-  }
+    @Bean
+    fun scalars(coercings: List<Coercing<*, *>>): List<GraphQLScalarType> {
+        return coercings.mapNotNull {
+            val graphqlScalar = it::class.java.getAnnotation(GraphqlScalar::class.java)
 
-  @Bean
-  fun graphql(codeRegistry: GraphQLCodeRegistry, scalars: List<GraphQLScalarType>): GraphQL {
-    val schemaParser = SchemaParser()
+            if (graphqlScalar === null) {
+                logger.debug(
+                    "Bean '%s' does not have annotation '%s'.",
+                    it.javaClass.canonicalName,
+                    GraphqlScalar::class.java.canonicalName
+                )
+                return@mapNotNull null
+            }
 
-    val typeDefinitionRegistry = getSchemaFiles()
-      .map {
-        InputStreamReader(it.inputStream, StandardCharsets.UTF_8)
-          .use { stream -> schemaParser.parse(stream) }
-      }
-      .fold(TypeDefinitionRegistry()) { a, b ->
-        a.merge(b)
-      }
+            val name = graphqlScalar.name
 
-    val schemaGenerator = SchemaGenerator()
+            if (name.isBlank()) {
+                logger.error("Bean '%s' should has a name, but be blank.", it.javaClass.canonicalName)
+                return@mapNotNull null
+            }
 
-    val runtimeWiring = RuntimeWiring.newRuntimeWiring()
-      .codeRegistry(codeRegistry)
+            GraphQLScalarType.newScalar()
+                .name(name)
+                .coercing(it)
+                .build()
+        }
 
-    scalars.forEach { runtimeWiring.scalar(it) }
+    }
+
+    @Bean
+    fun graphql(codeRegistry: GraphQLCodeRegistry, scalars: List<GraphQLScalarType>): GraphQL {
+        val schemaParser = SchemaParser()
+
+        val typeDefinitionRegistry = getSchemaFiles()
+            .map {
+                InputStreamReader(it.inputStream, StandardCharsets.UTF_8)
+                    .use { stream -> schemaParser.parse(stream) }
+            }
+            .fold(TypeDefinitionRegistry()) { a, b ->
+                a.merge(b)
+            }
+
+        val schemaGenerator = SchemaGenerator()
+
+        val runtimeWiring = RuntimeWiring.newRuntimeWiring()
+            .codeRegistry(codeRegistry)
+
+        scalars.forEach { runtimeWiring.scalar(it) }
 
 
-    val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
-    return GraphQL.newGraphQL(schema).build()
-  }
+        val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
+        return GraphQL.newGraphQL(schema).build()
+    }
 }
