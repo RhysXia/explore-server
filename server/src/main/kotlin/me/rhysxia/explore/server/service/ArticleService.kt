@@ -9,5 +9,5 @@ interface ArticleService {
   fun findAllByCategoryId(categoryId: Long, pageable: Pageable): Flow<ArticlePo>
   suspend fun countByTagId(tagId: Long): Long
   fun findAllByTagId(tagId: Long, pageable: Pageable): Flow<ArticlePo>
-  fun findAllById(ids: MutableSet<Long>): Flow<ArticlePo>
+  fun findAllById(ids: MutableList<Long>): Flow<ArticlePo>
 }

@@ -7,7 +7,7 @@ import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 
-@GraphqlLoader("category2")
+@GraphqlLoader("category")
 class CategoryLoader : BatchLoader<Long, CategoryPo> {
   override fun load(keys: MutableList<Long>): CompletionStage<MutableList<CategoryPo>> {
     return CompletableFuture.completedStage(mutableListOf(CategoryPo(1, "aa", "aaa", Instant.now(), Instant.now())))

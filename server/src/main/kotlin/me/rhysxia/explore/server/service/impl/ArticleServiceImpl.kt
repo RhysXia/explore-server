@@ -26,7 +26,7 @@ class ArticleServiceImpl(private val articleRepository: ArticleRepository) : Art
     return articleRepository.findAllByTagId(tagId, pageable)
   }
 
-  override fun findAllById(ids: MutableSet<Long>): Flow<ArticlePo> {
+  override fun findAllById(ids: MutableList<Long>): Flow<ArticlePo> {
     return articleRepository.findAllById(ids)
   }
 }
