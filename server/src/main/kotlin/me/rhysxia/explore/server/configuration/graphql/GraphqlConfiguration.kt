@@ -1,6 +1,10 @@
 package me.rhysxia.explore.server.configuration.graphql
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.GraphQL
+import graphql.execution.instrumentation.ChainedInstrumentation
+import graphql.execution.instrumentation.Instrumentation
+import graphql.execution.instrumentation.tracing.TracingInstrumentation
 import graphql.schema.*
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -25,6 +29,7 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 @Configuration
@@ -98,7 +103,10 @@ class GraphqlConfiguration {
   }
 
   @Bean
-  fun graphQLCodeRegistry(ctx: ApplicationContext): GraphQLCodeRegistry {
+  fun graphQLCodeRegistry(
+    ctx: ApplicationContext,
+    objectMapper: ObjectMapper
+  ): GraphQLCodeRegistry {
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
     ctx.getBeansWithAnnotation(GraphqlData::class.java).forEach {
       val bean = it.value
@@ -129,24 +137,34 @@ class GraphqlConfiguration {
               return@map it
             }
             if (type.isAssignableFrom(Pageable::class.java)) {
-              val offset = it.getArgument<Long>("offset")
-              val limit = it.getArgument<Int>("limit")
-              val sort = it.getArgument<Sort>("sort")
+              val offset = objectMapper.convertValue(it.getArgumentOrDefault<Any>("offset", 0), Long::class.java)
+              val limit = objectMapper.convertValue(it.getArgumentOrDefault("limit", 10), Int::class.java)
+
+              val orderList =
+                it.getArgumentOrDefault<List<Map<String, String>>>("sort", emptyList())
+
+              val orders = orderList.map { order ->
+                Sort.Order(Sort.Direction.fromString(order["direction"]!!), order["property"]!!)
+              }
+
+              val sort = if (orders.isEmpty()) Sort.unsorted() else Sort.by(orders)
+
               return@map OffsetPage(offset, limit, sort)
             }
 
             val graphqlInput = parameter.getDeclaredAnnotation(GraphqlInput::class.java)
             val name = if (graphqlInput === null) parameter.name else graphqlInput.name
-            it.getArgument(name)
+            objectMapper.convertValue(it.getArgument(name), parameter.type)
           }
 
 
           if (isSuspend) {
             val future = CompletableFuture<Any>()
-            GlobalScope.launch {
-              val result = method.invoke(bean, *args.toTypedArray(), this)
-              future.complete(result)
+            val continuation = Continuation<Any>(EmptyCoroutineContext) { result ->
+              val value = result.getOrThrow()
+              future.complete(value)
             }
+            method.invoke(bean, *args.toTypedArray(), continuation)
             return@DataFetcher future
           }
 
@@ -198,7 +216,11 @@ class GraphqlConfiguration {
   }
 
   @Bean
-  fun graphql(codeRegistry: GraphQLCodeRegistry, scalars: List<GraphQLScalarType>): GraphQL {
+  fun graphql(
+    codeRegistry: GraphQLCodeRegistry,
+    scalars: List<GraphQLScalarType>,
+    instrumentations: List<Instrumentation>
+  ): GraphQL {
     val schemaParser = SchemaParser()
 
     val typeDefinitionRegistry = getSchemaFiles()
@@ -217,8 +239,16 @@ class GraphqlConfiguration {
 
     scalars.forEach { runtimeWiring.scalar(it) }
 
+    val chainedInstrumentation = ChainedInstrumentation(instrumentations)
 
     val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
-    return GraphQL.newGraphQL(schema).build()
+    return GraphQL.newGraphQL(schema)
+      .instrumentation(chainedInstrumentation)
+      .build()
+  }
+
+  @Bean
+  fun tracingInstrumentation(): Instrumentation {
+    return TracingInstrumentation()
   }
 }
