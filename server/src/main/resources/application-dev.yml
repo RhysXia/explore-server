@@ -1,8 +1,8 @@
 spring:
   r2dbc:
     password: root
-    username: postgres
-    url: r2dbc:postgresql://localhost:5432/blog
+    username: root
+    url: r2dbc:postgresql://nas.8910.xyz:4000/blog
   redis:
     host: nas.8910.xyz
     port: 6379

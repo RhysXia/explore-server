@@ -7,6 +7,7 @@ import org.dataloader.DataLoader
 import org.dataloader.DataLoaderRegistry
 import org.dataloader.MappedBatchLoader
 import org.slf4j.LoggerFactory
+import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -22,7 +23,6 @@ class GraphqlController(
 ) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass)
-
 
     @PostMapping("/graphql")
     fun graphql(@RequestBody graphqlRequestBody: GraphqlRequestBody): Mono<MutableMap<String, Any>> {
@@ -44,6 +44,5 @@ class GraphqlController(
             .build()
 
         return graphql.executeAsync(executionInput).toMono().map { it.toSpecification() }
-
     }
 }

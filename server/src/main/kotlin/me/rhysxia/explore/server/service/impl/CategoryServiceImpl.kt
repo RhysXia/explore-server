@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class CategoryServiceImpl(private val categoryRepository: CategoryRepository) : CategoryService {
-  override fun findAllById(ids: MutableSet<Long>): Flow<CategoryPo> {
+  override fun findAllById(ids: Set<Long>): Flow<CategoryPo> {
     return categoryRepository.findAllById(ids)
   }
 

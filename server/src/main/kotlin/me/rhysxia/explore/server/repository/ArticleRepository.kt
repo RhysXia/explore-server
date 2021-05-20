@@ -15,4 +15,6 @@ interface ArticleRepository : CoroutineSortingRepository<ArticlePo, Long> {
 
   @Query("SELECT * FROM Article a WHERE a.id in (SELECT article_id FROM rel_tag_article rta WHERE rta.tag_id = :tagId)")
   fun findAllByTagId(tagId: Long, pageable: Pageable): Flow<ArticlePo>
+
+  fun findAllByAuthorId(authorId: Long, pageable: Pageable): Flow<ArticlePo>
 }

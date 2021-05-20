@@ -9,5 +9,5 @@ interface CommentService {
   fun findAllByArticleId(articleId: Long, pageable: Pageable): Flow<CommentPo>
   suspend fun countByArticleIdAndParentId(articleId: Long, parentId: Long?): Long
   suspend fun countByArticleId(articleId: Long): Long
-  fun findAllById(ids: MutableSet<Long>): Flow<CommentPo>
+  fun findAllById(ids: Set<Long>): Flow<CommentPo>
 }

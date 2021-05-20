@@ -29,4 +29,8 @@ class ArticleServiceImpl(private val articleRepository: ArticleRepository) : Art
     override fun findAllById(ids: Iterable<Long>): Flow<ArticlePo> {
         return articleRepository.findAllById(ids)
     }
+
+  override fun findAllByAuthorId(authorId: Long, pageable: Pageable): Flow<ArticlePo> {
+    return articleRepository.findAllByAuthorId(authorId, pageable)
+  }
 }

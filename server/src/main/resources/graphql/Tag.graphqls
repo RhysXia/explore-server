@@ -8,7 +8,7 @@ type Tag {
     """更新时间"""
     updatedAt: Timestamp!,
     """标签下的文章，支持分页排序"""
-    articles(page: Page): [Article!]!
+    articles(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Article!]!
     """标签下的文章综述"""
     articleCount: Int!
 }
