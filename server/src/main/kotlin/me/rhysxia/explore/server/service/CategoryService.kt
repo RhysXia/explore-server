@@ -5,7 +5,7 @@ import me.rhysxia.explore.server.po.CategoryPo
 import org.springframework.data.domain.Pageable
 
 interface CategoryService {
-  fun findAllById(ids: MutableSet<Long>): Flow<CategoryPo>
+  fun findAllById(ids: Set<Long>): Flow<CategoryPo>
   fun findAllBy(pageable: Pageable): Flow<CategoryPo>
   suspend fun count(): Long
 }

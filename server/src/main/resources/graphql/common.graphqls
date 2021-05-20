@@ -21,14 +21,3 @@ input Order {
     """排序方式"""
     direction: Direction!
 }
-
-"""分页"""
-input Page {
-    """页码，从0开始"""
-    page: Int!,
-    """每页大小"""
-    size: Int!,
-    """排序方式"""
-    sort: [Order!]
-}
-

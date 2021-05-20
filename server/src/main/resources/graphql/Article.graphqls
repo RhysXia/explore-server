@@ -18,7 +18,7 @@ type Article {
     """所属标签"""
     tags: [Tag!]!
     """评论，支持查找所有评论或者直接下级评论，支持分页排序"""
-    comments(top: Boolean = true, page: Page!): [Comment!]!
+    comments(top: Boolean = true, offset: Int = 0, limit: Int = 10, sort: [Order!]): [Comment!]!
     """评论数，支持查找所有评论或者直接下级评论"""
     commentCount(top: Boolean = true): Int!
 }

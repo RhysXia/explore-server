@@ -16,6 +16,7 @@ class CommentServiceImpl(private val commentRepository: CommentRepository) : Com
   override suspend fun countByArticleId(articleId: Long): Long {
     return commentRepository.countByArticleId(articleId)
   }
+
   override fun findAllByArticleId(articleId: Long, pageable: Pageable): Flow<CommentPo> {
     return commentRepository.findAllByArticleId(articleId, pageable)
   }
@@ -25,7 +26,7 @@ class CommentServiceImpl(private val commentRepository: CommentRepository) : Com
 
   }
 
-  override fun findAllById(ids: MutableSet<Long>): Flow<CommentPo> {
+  override fun findAllById(ids: Set<Long>): Flow<CommentPo> {
     return commentRepository.findAllById(ids)
 
   }

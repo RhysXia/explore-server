@@ -15,7 +15,7 @@ type Category {
     updatedAt: Timestamp!,
 
     """分类下的文章，支持分页排序"""
-    articles(page: Page!): [Article!]!
+    articles(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Article!]!
 
     """分类下的文章总数"""
     articleCount: Int!
