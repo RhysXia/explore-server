@@ -10,23 +10,23 @@ import org.springframework.stereotype.Service
 @Service
 class ArticleServiceImpl(private val articleRepository: ArticleRepository) : ArticleService {
 
-  override suspend fun countByCategoryId(categoryId: Long): Long {
-    return articleRepository.countByCategoryId(categoryId)
-  }
+    override suspend fun countByCategoryId(categoryId: Long): Long {
+        return articleRepository.countByCategoryId(categoryId)
+    }
 
-  override fun findAllByCategoryId(categoryId: Long, pageable: Pageable): Flow<ArticlePo> {
-    return articleRepository.findAllByCategoryId(categoryId, pageable)
-  }
+    override fun findAllByCategoryId(categoryId: Long, pageable: Pageable): Flow<ArticlePo> {
+        return articleRepository.findAllByCategoryId(categoryId, pageable)
+    }
 
-  override suspend fun countByTagId(tagId: Long): Long {
-    return articleRepository.countByTagId(tagId)
-  }
+    override suspend fun countByTagId(tagId: Long): Long {
+        return articleRepository.countByTagId(tagId)
+    }
 
-  override fun findAllByTagId(tagId: Long, pageable: Pageable): Flow<ArticlePo> {
-    return articleRepository.findAllByTagId(tagId, pageable)
-  }
+    override fun findAllByTagId(tagId: Long, pageable: Pageable): Flow<ArticlePo> {
+        return articleRepository.findAllByTagId(tagId, pageable)
+    }
 
-  override fun findAllById(ids: MutableList<Long>): Flow<ArticlePo> {
-    return articleRepository.findAllById(ids)
-  }
+    override fun findAllById(ids: Iterable<Long>): Flow<ArticlePo> {
+        return articleRepository.findAllById(ids)
+    }
 }
