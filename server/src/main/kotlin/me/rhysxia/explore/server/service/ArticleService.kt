@@ -5,9 +5,9 @@ import me.rhysxia.explore.server.po.ArticlePo
 import org.springframework.data.domain.Pageable
 
 interface ArticleService {
-  suspend fun countByCategoryId(categoryId: Long): Long
-  fun findAllByCategoryId(categoryId: Long, pageable: Pageable): Flow<ArticlePo>
-  suspend fun countByTagId(tagId: Long): Long
-  fun findAllByTagId(tagId: Long, pageable: Pageable): Flow<ArticlePo>
-  fun findAllById(ids: MutableList<Long>): Flow<ArticlePo>
+    suspend fun countByCategoryId(categoryId: Long): Long
+    fun findAllByCategoryId(categoryId: Long, pageable: Pageable): Flow<ArticlePo>
+    suspend fun countByTagId(tagId: Long): Long
+    fun findAllByTagId(tagId: Long, pageable: Pageable): Flow<ArticlePo>
+    fun findAllById(ids: Iterable<Long>): Flow<ArticlePo>
 }
