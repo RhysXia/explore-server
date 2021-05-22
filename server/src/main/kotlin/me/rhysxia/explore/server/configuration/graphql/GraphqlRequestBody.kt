@@ -1,7 +1,10 @@
 package me.rhysxia.explore.server.configuration.graphql
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 data class GraphqlRequestBody(
-  val query: String?,
-  val variables: Map<String, Any> = emptyMap(),
-  val operationName: String?
+  @JsonProperty("variables") val variables: Map<String, Any> = emptyMap(),
+  @JsonProperty("extensions") val extensions: Map<String, Any> = emptyMap(),
+  @JsonProperty("operationName") val operationName: String?,
+  @JsonProperty("query") val query: String
 )
