@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql.query
+package me.rhysxia.explore.server.graphql.handler
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +13,7 @@ import me.rhysxia.explore.server.service.TagService
 import org.springframework.data.domain.Pageable
 
 @GraphqlData("User")
-class UserQuery(
+class UserHandler(
   private val categoryService: CategoryService,
   private val tagService: TagService,
   private val articleService: ArticleService,

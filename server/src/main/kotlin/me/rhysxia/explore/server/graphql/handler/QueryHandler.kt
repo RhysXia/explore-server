@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.graphql.query
+package me.rhysxia.explore.server.graphql.handler
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable
 import java.util.concurrent.CompletableFuture
 
 @GraphqlData("Query")
-class RootQuery(
+class QueryHandler(
   private val categoryService: CategoryService,
   private val tagService: TagService,
   private val articleService: ArticleService

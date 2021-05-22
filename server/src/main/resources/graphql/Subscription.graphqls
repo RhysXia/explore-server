@@ -1,3 +1,4 @@
 type Subscription {
-    a: Int!
+    messages: String!
+    category: Category!
 }
