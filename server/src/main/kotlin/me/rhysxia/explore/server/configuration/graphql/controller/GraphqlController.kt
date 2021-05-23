@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.configuration.graphql
+package me.rhysxia.explore.server.configuration.graphql.controller
 
 import graphql.ExecutionInput
 import graphql.GraphQL
@@ -7,6 +7,7 @@ import org.dataloader.DataLoader
 import org.dataloader.DataLoaderRegistry
 import org.dataloader.MappedBatchLoader
 import org.slf4j.LoggerFactory
+import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -23,6 +24,7 @@ class GraphqlController(
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
+  @CrossOrigin
   @PostMapping("/graphql")
   fun graphql(@RequestBody graphqlRequestBody: GraphqlRequestBody): Mono<MutableMap<String, Any>> {
     val dataLoaderRegister = DataLoaderRegistry()

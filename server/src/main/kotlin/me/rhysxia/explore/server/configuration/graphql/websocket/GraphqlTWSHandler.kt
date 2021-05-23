@@ -1,10 +1,10 @@
-package me.rhysxia.explore.server.configuration.graphql
+package me.rhysxia.explore.server.configuration.graphql.websocket
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
+import me.rhysxia.explore.server.configuration.graphql.controller.GraphqlRequestBody
 import org.dataloader.BatchLoader
 import org.dataloader.DataLoader
 import org.dataloader.DataLoaderRegistry
@@ -20,19 +20,31 @@ import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.util.concurrent.ConcurrentHashMap
 
-
 @Component
-class GraphqlWebsocket(
+class GraphqlTWSHandler(
   private val graphql: GraphQL,
   private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
   private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
 ) : TextWebSocketHandler() {
+
+  companion object {
+    private const val GQL_CONNECTION_INIT = "connection_init"
+    private const val GQL_CONNECTION_ACK = "connection_ack"
+    private const val GQL_SUBSCRIBE = "subscribe"
+    private const val GQL_STOP = "stop"
+    private const val GQL_NEXT = "next"
+    private const val GQL_ERROR = "error"
+    private const val GQL_COMPLETE = "complete"
+  }
+
+
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
   internal val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
 
   override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
     subscriptions[session.id]?.values?.forEach { it.cancel() }
+    subscriptions.remove(session.id)
   }
 
   override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
@@ -50,7 +62,7 @@ class GraphqlWebsocket(
           )
         )
       }
-      GQL_START -> {
+      GQL_SUBSCRIBE -> {
         val queryPayload = jacksonObjectMapper().convertValue(payload, GraphqlRequestBody::class.java)
         handleSubscription(id!!, queryPayload, session)
       }
@@ -58,9 +70,8 @@ class GraphqlWebsocket(
         subscriptions[session.id]?.get(id)?.cancel()
         subscriptions.remove(id)
       }
-      GQL_CONNECTION_TERMINATE -> {
+      GQL_COMPLETE -> {
         logger.info("Terminated session " + session.id)
-        subscriptions.remove(session.id)
         session.close()
       }
       else -> session.sendMessage(TextMessage(jacksonObjectMapper().writeValueAsBytes(OperationMessage("error"))))
@@ -99,7 +110,7 @@ class GraphqlWebsocket(
       }
 
       override fun onNext(er: ExecutionResult) {
-        val message = OperationMessage(GQL_DATA, DataPayload(er.getData()), id)
+        val message = OperationMessage(GQL_NEXT, DataPayload(er.getData()), id)
         val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
         logger.debug("Sending subscription data: {}", jsonMessage)
 
@@ -122,7 +133,7 @@ class GraphqlWebsocket(
 
       override fun onComplete() {
         logger.info("Subscription completed for {}", id)
-        val message = OperationMessage(GQL_TYPE, null, id)
+        val message = OperationMessage(GQL_COMPLETE, null, id)
         val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
 
         if (session.isOpen) {
@@ -135,19 +146,5 @@ class GraphqlWebsocket(
   }
 }
 
-const val GQL_CONNECTION_INIT = "connection_init"
-const val GQL_CONNECTION_ACK = "connection_ack"
-const val GQL_START = "start"
-const val GQL_STOP = "stop"
-const val GQL_DATA = "data"
-const val GQL_ERROR = "error"
-const val GQL_TYPE = "complete"
-const val GQL_CONNECTION_TERMINATE = "connection_terminate"
 
-data class DataPayload(val data: Any?, val errors: List<Any>? = emptyList())
 
-data class OperationMessage(
-  @JsonProperty("type") val type: String,
-  @JsonProperty("payload") val payload: Any? = null,
-  @JsonProperty("id", required = false) val id: String? = ""
-)
