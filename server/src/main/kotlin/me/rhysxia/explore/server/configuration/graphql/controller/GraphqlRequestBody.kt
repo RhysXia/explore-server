@@ -1,4 +1,4 @@
-package me.rhysxia.explore.server.configuration.graphql
+package me.rhysxia.explore.server.configuration.graphql.controller
 
 import com.fasterxml.jackson.annotation.JsonProperty
 

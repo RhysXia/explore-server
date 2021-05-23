@@ -26,11 +26,14 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import kotlin.reflect.KParameter
+import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaType
 
@@ -185,6 +188,8 @@ class GraphqlConfiguration {
         }
 
         val isSuspend = method.isSuspend
+        val isFuture =
+          method.returnType.isSubtypeOf(CompletionStage::class.createType(listOf(KTypeProjection(null, null))))
 
         val parameters = method.parameters
 
@@ -201,7 +206,7 @@ class GraphqlConfiguration {
             if (type.isSubtypeOf(DataFetchingEnvironment::class.createType())) {
               return@map dfe
             }
-            if (type.isSubtypeOf(OffsetPage::class.createType())) {
+            if (type.isSubtypeOf(Pageable::class.createType())) {
               val offset =
                 objectMapper.convertValue(dfe.getArgumentOrDefault<Any>("offset", 0), Long::class.java)
               val limit = objectMapper.convertValue(dfe.getArgumentOrDefault("limit", 10), Int::class.java)
@@ -224,9 +229,13 @@ class GraphqlConfiguration {
             objectMapper.convertValue(dfe.getArgument(name), javaType as Class<*>)
           }.toTypedArray()
 
+          if (isFuture) {
+            return@DataFetcher method.call(*args)
+          }
+
           val future = CompletableFuture<Any>()
           GlobalScope.launch {
-            val result = if (isSuspend) method.callSuspend(*args) else method.call(*args)
+            val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
             if (result is Flow<*>) {
               val flow = result as Flow<Any>
               if (isSubscription) {
