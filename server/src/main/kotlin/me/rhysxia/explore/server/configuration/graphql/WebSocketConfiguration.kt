@@ -1,5 +1,7 @@
-package me.rhysxia.explore.server.configuration.graphql.websocket
+package me.rhysxia.explore.server.configuration.graphql
 
+import me.rhysxia.explore.server.configuration.graphql.websocket.GraphqlTWSHandler
+import me.rhysxia.explore.server.configuration.graphql.websocket.GraphqlWSHandler
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer

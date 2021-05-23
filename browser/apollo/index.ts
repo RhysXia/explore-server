@@ -22,10 +22,12 @@ const splitLink = isClient ? split(
     httpLink,
 ) : httpLink
 
-const client = new ApolloClient({
-    link: splitLink,
-    cache: new InMemoryCache(),
-    ssrMode: isServer
-});
+const createClient = () => {
+    const client = new ApolloClient({
+        link: splitLink,
+        cache: new InMemoryCache(),
+        ssrMode: isServer
+    });
+    return client
+}
 
-export default client

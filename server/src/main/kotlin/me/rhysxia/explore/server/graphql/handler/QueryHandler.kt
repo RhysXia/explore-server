@@ -11,6 +11,7 @@ import me.rhysxia.explore.server.service.ArticleService
 import me.rhysxia.explore.server.service.CategoryService
 import me.rhysxia.explore.server.service.TagService
 import org.springframework.data.domain.Pageable
+import java.lang.RuntimeException
 import java.util.concurrent.CompletableFuture
 
 @GraphqlData("Query")
