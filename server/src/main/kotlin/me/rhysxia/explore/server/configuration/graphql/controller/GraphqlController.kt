@@ -26,7 +26,9 @@ class GraphqlController(
 
   @CrossOrigin
   @PostMapping("/graphql")
-  fun graphql(@RequestBody graphqlRequestBody: GraphqlRequestBody): Mono<MutableMap<String, Any>> {
+  fun graphql(
+    @RequestBody graphqlRequestBody: GraphqlRequestBody,
+  ): Mono<MutableMap<String, Any>> {
     val dataLoaderRegister = DataLoaderRegistry()
 
     this.batchLoaderMap.forEach { (key, value) ->

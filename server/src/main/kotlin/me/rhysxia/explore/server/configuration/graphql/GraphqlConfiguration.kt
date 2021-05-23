@@ -29,6 +29,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import java.io.InputStreamReader
+import java.lang.reflect.InvocationTargetException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -235,16 +236,20 @@ class GraphqlConfiguration {
 
           val future = CompletableFuture<Any>()
           GlobalScope.launch {
-            val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
-            if (result is Flow<*>) {
-              val flow = result as Flow<Any>
-              if (isSubscription) {
-                future.complete(flow.asFlux())
+            try {
+              val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
+              if (result is Flow<*>) {
+                val flow = result as Flow<Any>
+                if (isSubscription) {
+                  future.complete(flow.asFlux())
+                } else {
+                  future.complete(flow.toList())
+                }
               } else {
-                future.complete(flow.toList())
+                future.complete(result)
               }
-            } else {
-              future.complete(result)
+            } catch (ex: InvocationTargetException) {
+              future.completeExceptionally(ex.targetException)
             }
           }
           return@DataFetcher future
