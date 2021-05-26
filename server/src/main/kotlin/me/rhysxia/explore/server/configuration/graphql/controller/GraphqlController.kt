@@ -2,6 +2,8 @@ package me.rhysxia.explore.server.configuration.graphql.controller
 
 import graphql.ExecutionInput
 import graphql.GraphQL
+import me.rhysxia.explore.server.service.PermissionService
+import me.rhysxia.explore.server.service.UserService
 import org.dataloader.BatchLoader
 import org.dataloader.DataLoader
 import org.dataloader.DataLoaderRegistry
@@ -19,7 +21,8 @@ import reactor.kotlin.core.publisher.toMono
 class GraphqlController(
   private val graphql: GraphQL,
   private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
-  private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>
+  private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
+  private val userService: UserService
 ) {
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
