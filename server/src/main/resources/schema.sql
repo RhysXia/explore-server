@@ -1,4 +1,15 @@
 -- ----------------------------
+-- Permission
+-- ----------------------------
+DROP TABLE IF EXISTS sys_permission;
+CREATE TABLE sys_permission
+(
+    id          SERIAL,
+    path        VARCHAR(255) NOT NULL,
+    description VARCHAR(100)
+);
+
+-- ----------------------------
 -- Role
 -- ----------------------------
 DROP TABLE IF EXISTS sys_role;
