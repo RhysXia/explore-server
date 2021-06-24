@@ -2,6 +2,7 @@ package me.rhysxia.explore.server.configuration.graphql
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.GraphQL
+import graphql.GraphQLContext
 import graphql.execution.SubscriptionExecutionStrategy
 import graphql.execution.instrumentation.ChainedInstrumentation
 import graphql.execution.instrumentation.Instrumentation
@@ -17,7 +18,11 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.server.configuration.graphql.annotation.*
+import me.rhysxia.explore.server.configuration.graphql.exception.AuthException
+import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.dto.OffsetPage
+import me.rhysxia.explore.server.po.TokenPo
+import me.rhysxia.explore.server.po.UserPo
 import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.slf4j.LoggerFactory
@@ -200,6 +205,7 @@ class GraphqlConfiguration {
             if (graphqlParentType is GraphQLObjectType) graphqlParentType.name == "Subscription" else false
 
           val args = parameters.map { parameter ->
+
             val type = parameter.type
             if (parameter.kind == KParameter.Kind.INSTANCE) {
               return@map bean
@@ -222,6 +228,32 @@ class GraphqlConfiguration {
               val sort = if (orders.isEmpty()) Sort.unsorted() else Sort.by(orders)
 
               return@map OffsetPage(offset, limit, sort)
+            }
+
+            val currentUser = parameter.findAnnotation<CurrentUser>()
+
+            if(currentUser!= null) {
+              val context = dfe.getContext<GraphQLContext>()
+              val authUser: AuthUser? = context.get(AuthFilter.USER_KEY)
+
+              val value = when {
+                type.isSupertypeOf(AuthUser::class.createType()) -> {
+                   authUser
+                }
+                type.isSupertypeOf(UserPo::class.createType()) -> {
+                  authUser?.user
+                }
+                type.isSupertypeOf(TokenPo::class.createType()) -> {
+                  authUser?.token
+                }
+                else -> null
+              }
+
+              if(!parameter.isOptional && value == null) {
+                throw AuthException("Please provide current user.")
+              }
+
+              return@map value
             }
 
             val graphqlInput = parameter.findAnnotation<GraphqlInput>()

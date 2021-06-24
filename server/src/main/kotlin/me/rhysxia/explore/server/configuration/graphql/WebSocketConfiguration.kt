@@ -2,6 +2,7 @@ package me.rhysxia.explore.server.configuration.graphql
 
 import me.rhysxia.explore.server.configuration.graphql.websocket.GraphqlTWSHandler
 import me.rhysxia.explore.server.configuration.graphql.websocket.GraphqlWSHandler
+import me.rhysxia.explore.server.service.TokenService
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
@@ -12,7 +13,8 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler
 @EnableWebSocket
 class WebSocketConfiguration(
   private val graphqlWSHandler: GraphqlWSHandler,
-  private val graphqlTWSHandler: GraphqlTWSHandler
+  private val graphqlTWSHandler: GraphqlTWSHandler,
+  private val tokenService: TokenService
 ) : WebSocketConfigurer {
   override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
     val defaultHandshakeHandler = DefaultHandshakeHandler()
@@ -20,6 +22,7 @@ class WebSocketConfiguration(
     registry
       .addHandler(graphqlWSHandler, "/subscriptions")
       .setHandshakeHandler(defaultHandshakeHandler)
+      .addInterceptors(AuthHandshakeInterceptor(tokenService))
       .setAllowedOrigins("*")
 
     val defaultHandshakeHandler2 = DefaultHandshakeHandler()
@@ -27,6 +30,7 @@ class WebSocketConfiguration(
     registry
       .addHandler(graphqlTWSHandler, "/subscriptions")
       .setHandshakeHandler(defaultHandshakeHandler2)
+      .addInterceptors(AuthHandshakeInterceptor(tokenService))
       .setAllowedOrigins("*")
   }
 }
