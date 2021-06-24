@@ -18,6 +18,8 @@ class AuthHandshakeInterceptor(private val tokenService: TokenService): Handshak
 
         if(request is ServletServerHttpRequest) {
         }
+
+        return true
     }
 
     override fun afterHandshake(
