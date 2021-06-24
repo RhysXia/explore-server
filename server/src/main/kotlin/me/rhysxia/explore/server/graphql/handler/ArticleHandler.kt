@@ -2,9 +2,11 @@ package me.rhysxia.explore.server.graphql.handler
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
+import me.rhysxia.explore.server.configuration.graphql.annotation.CurrentUser
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlData
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlHandler
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlInput
+import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.CategoryPo
 import me.rhysxia.explore.server.po.CommentPo
@@ -25,7 +27,7 @@ class ArticleHandler(
 ) {
 
   @GraphqlHandler
-  fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
+  fun category(@CurrentUser user: AuthUser?, dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
     val article = dfe.getSource<ArticlePo>()
     return dfe.getDataLoader<Long, CategoryPo>("category").load(article.id!!)
   }
