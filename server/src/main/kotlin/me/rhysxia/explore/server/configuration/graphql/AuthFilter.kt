@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse
 
 class AuthFilter(private val tokenService: TokenService) : OncePerRequestFilter() {
     companion object {
-        const val TOKEN_KEY = "__TOKEN__"
         const val USER_KEY = "__USER_KEY__"
     }
 
@@ -21,7 +20,6 @@ class AuthFilter(private val tokenService: TokenService) : OncePerRequestFilter(
     ) {
         val token: String? = request.getHeader(HttpHeaders.AUTHORIZATION)
         if (!token.isNullOrEmpty()) {
-            request.setAttribute(TOKEN_KEY, token)
             runBlocking {
                 val authUser = tokenService.findAuthUserByToken(token)
                 request.setAttribute(USER_KEY, authUser)

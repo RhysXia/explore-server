@@ -4,7 +4,7 @@
 DROP TABLE IF EXISTS sys_permission;
 CREATE TABLE sys_permission
 (
-    id          SERIAL,
+    id          SERIAL PRIMARY KEY,
     path        VARCHAR(255) NOT NULL,
     description VARCHAR(100)
 );
@@ -15,7 +15,7 @@ CREATE TABLE sys_permission
 DROP TABLE IF EXISTS sys_role;
 CREATE TABLE sys_role
 (
-    id          SERIAL,
+    id          SERIAL PRIMARY KEY,
     name        VARCHAR(50) NOT NULL,
     description VARCHAR(100)
 );
@@ -26,7 +26,7 @@ CREATE TABLE sys_role
 DROP TABLE IF EXISTS sys_user;
 CREATE TABLE sys_user
 (
-    id            SERIAL,
+    id            SERIAL PRIMARY KEY,
     username      VARCHAR(50) NOT NULL,
     password      VARCHAR(50) NOT NULL,
     nickname      VARCHAR(50) NOT NULL,
@@ -45,9 +45,21 @@ CREATE TABLE sys_user
 DROP TABLE IF EXISTS rel_user_role;
 CREATE TABLE rel_user_role
 (
-    id      SERIAL,
+    id      SERIAL PRIMARY KEY,
     user_id int4 NOT NULL,
     role_id int4 NOT NULL
+);
+
+-- ----------------------------
+-- Token
+-- ----------------------------
+DROP TABLE IF EXISTS sys_token;
+CREATE TABLE sys_token
+(
+    id         SERIAL PRIMARY KEY,
+    user_id    int4      NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 
 -- ----------------------------
@@ -56,7 +68,7 @@ CREATE TABLE rel_user_role
 DROP TABLE IF EXISTS category;
 CREATE TABLE category
 (
-    id          SERIAL,
+    id          SERIAL PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
     description VARCHAR(255),
     created_at  TIMESTAMP    NOT NULL,
@@ -69,7 +81,7 @@ CREATE TABLE category
 DROP TABLE IF EXISTS tag;
 CREATE TABLE tag
 (
-    id         SERIAL,
+    id         SERIAL PRIMARY KEY,
     name       VARCHAR(255) NOT NULL,
     created_at TIMESTAMP    NOT NULL,
     updated_at TIMESTAMP    NOT NULL
@@ -81,7 +93,7 @@ CREATE TABLE tag
 DROP TABLE IF EXISTS article;
 CREATE TABLE article
 (
-    id           SERIAL,
+    id           SERIAL PRIMARY KEY,
     title        VARCHAR(255) NOT NULL,
     content      VARCHAR(255) NOT NULL,
     content_type VARCHAR(20)  NOT NULL,
@@ -97,7 +109,7 @@ CREATE TABLE article
 DROP TABLE IF EXISTS rel_tag_article;
 CREATE TABLE rel_tag_article
 (
-    id         SERIAL,
+    id         SERIAL PRIMARY KEY,
     article_id int4 NOT NULL,
     tag_id     int4 NOT NULL
 );
@@ -108,7 +120,7 @@ CREATE TABLE rel_tag_article
 DROP TABLE IF EXISTS comment;
 CREATE TABLE comment
 (
-    id           SERIAL,
+    id           SERIAL PRIMARY KEY,
     content      VARCHAR(255) NOT NULL,
     content_type VARCHAR(20)  NOT NULL,
     created_at   TIMESTAMP    NOT NULL,
