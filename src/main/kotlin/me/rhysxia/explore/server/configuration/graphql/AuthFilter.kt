@@ -18,7 +18,8 @@ class AuthFilter(private val tokenService: TokenService) : OncePerRequestFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val token: String? = request.getHeader(HttpHeaders.AUTHORIZATION)
+        var token: String? = request.getHeader(HttpHeaders.AUTHORIZATION)
+
         if (!token.isNullOrEmpty()) {
             runBlocking {
                 val authUser = tokenService.findAuthUserByToken(token)
