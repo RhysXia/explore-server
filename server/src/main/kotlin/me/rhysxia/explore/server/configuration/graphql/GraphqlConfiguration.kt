@@ -249,7 +249,7 @@ class GraphqlConfiguration {
                 else -> null
               }
 
-              if(!parameter.isOptional && value == null) {
+              if(!type.isMarkedNullable && value == null) {
                 throw AuthException("Please provide current user.")
               }
 

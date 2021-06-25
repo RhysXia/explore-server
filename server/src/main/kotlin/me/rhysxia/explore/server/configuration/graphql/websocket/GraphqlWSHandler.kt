@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
+import me.rhysxia.explore.server.configuration.graphql.AuthFilter
 import me.rhysxia.explore.server.configuration.graphql.controller.GraphqlRequestBody
 import org.dataloader.BatchLoader
 import org.dataloader.DataLoader
@@ -80,6 +81,7 @@ class GraphqlWSHandler(
   }
 
   private fun handleSubscription(id: String, graphqlRequestBody: GraphqlRequestBody, session: WebSocketSession) {
+    val authUser = session.attributes[AuthFilter.USER_KEY]
 
     val dataLoaderRegister = DataLoaderRegistry()
 
@@ -92,6 +94,9 @@ class GraphqlWSHandler(
     }
 
     val executionInput = ExecutionInput.newExecutionInput()
+      .context {
+        if(authUser != null) it.of(AuthFilter.USER_KEY, authUser) else it
+      }
       .query(graphqlRequestBody.query)
       .variables(graphqlRequestBody.variables)
       .operationName(graphqlRequestBody.operationName)

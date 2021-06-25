@@ -14,7 +14,7 @@ class GraphqlControllerConfiguration {
         val registration = FilterRegistrationBean<AuthFilter>()
         registration.filter = AuthFilter(tokenService)
         registration.order = Ordered.HIGHEST_PRECEDENCE
-        registration.urlPatterns = listOf("/**")
+        registration.urlPatterns = listOf("/*")
         return registration
     }
 }

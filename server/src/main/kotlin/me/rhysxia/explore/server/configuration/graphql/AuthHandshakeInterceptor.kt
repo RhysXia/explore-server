@@ -1,5 +1,6 @@
 package me.rhysxia.explore.server.configuration.graphql
 
+import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.service.TokenService
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
@@ -17,6 +18,10 @@ class AuthHandshakeInterceptor(private val tokenService: TokenService): Handshak
     ): Boolean {
 
         if(request is ServletServerHttpRequest) {
+            val user = request.servletRequest.getAttribute(AuthFilter.USER_KEY) as AuthUser?
+            if(user !== null) {
+                attributes[AuthFilter.USER_KEY] = user
+            }
         }
 
         return true
@@ -28,6 +33,5 @@ class AuthHandshakeInterceptor(private val tokenService: TokenService): Handshak
         wsHandler: WebSocketHandler,
         exception: Exception?
     ) {
-        TODO("Not yet implemented")
     }
 }

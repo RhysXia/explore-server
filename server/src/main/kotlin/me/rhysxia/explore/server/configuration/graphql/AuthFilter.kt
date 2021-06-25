@@ -25,7 +25,6 @@ class AuthFilter(private val tokenService: TokenService) : OncePerRequestFilter(
                 request.setAttribute(USER_KEY, authUser)
             }
         }
-
         filterChain.doFilter(request, response)
     }
 }
