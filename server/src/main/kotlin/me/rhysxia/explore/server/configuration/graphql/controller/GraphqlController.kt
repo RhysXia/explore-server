@@ -43,7 +43,7 @@ class GraphqlController(
 
         val executionInput = ExecutionInput.newExecutionInput()
             .context {
-                it.of(AuthFilter.USER_KEY, authUser)
+                if(authUser != null) it.of(AuthFilter.USER_KEY, authUser) else it
             }
             .query(graphqlRequestBody.query)
             .variables(graphqlRequestBody.variables)
