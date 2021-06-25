@@ -7,7 +7,7 @@ plugins {
   kotlin("plugin.spring") version "1.4.32"
 }
 
-group = "me.rhysxia.explore"
+group = "me.rhysxia.explore.server"
 version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
