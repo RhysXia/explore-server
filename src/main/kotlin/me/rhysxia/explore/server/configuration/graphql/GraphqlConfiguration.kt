@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.server.configuration.graphql.annotation.*
 import me.rhysxia.explore.server.configuration.graphql.exception.AuthException
+import me.rhysxia.explore.server.configuration.graphql.exception.DefaultDataFetcherExceptionHandler
 import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.dto.OffsetPage
 import me.rhysxia.explore.server.po.TokenPo
@@ -232,13 +233,13 @@ class GraphqlConfiguration {
 
             val currentUser = parameter.findAnnotation<CurrentUser>()
 
-            if(currentUser!= null) {
+            if (currentUser != null) {
               val context = dfe.getContext<GraphQLContext>()
               val authUser: AuthUser? = context.get(AuthFilter.USER_KEY)
 
               val value = when {
                 type.isSupertypeOf(AuthUser::class.createType()) -> {
-                   authUser
+                  authUser
                 }
                 type.isSupertypeOf(UserPo::class.createType()) -> {
                   authUser?.user
@@ -249,7 +250,7 @@ class GraphqlConfiguration {
                 else -> null
               }
 
-              if(!type.isMarkedNullable && value == null) {
+              if (!type.isMarkedNullable && value == null) {
                 throw AuthException("Please provide current user.")
               }
 
@@ -348,6 +349,7 @@ class GraphqlConfiguration {
 
     val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
     return GraphQL.newGraphQL(schema)
+      .defaultDataFetcherExceptionHandler(DefaultDataFetcherExceptionHandler())
       .instrumentation(chainedInstrumentation)
       .subscriptionExecutionStrategy(SubscriptionExecutionStrategy())
       .build()
