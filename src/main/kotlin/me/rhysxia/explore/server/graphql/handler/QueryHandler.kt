@@ -6,16 +6,13 @@ import me.rhysxia.explore.server.configuration.graphql.annotation.CurrentUser
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlData
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlHandler
 import me.rhysxia.explore.server.configuration.graphql.annotation.GraphqlInput
-import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.CategoryPo
-import me.rhysxia.explore.server.po.TokenPo
 import me.rhysxia.explore.server.po.UserPo
 import me.rhysxia.explore.server.service.ArticleService
 import me.rhysxia.explore.server.service.CategoryService
 import me.rhysxia.explore.server.service.TagService
 import org.springframework.data.domain.Pageable
-import java.lang.RuntimeException
 import java.util.concurrent.CompletableFuture
 
 @GraphqlData("Query")
@@ -24,6 +21,9 @@ class QueryHandler(
   private val tagService: TagService,
   private val articleService: ArticleService
 ) {
+
+  @GraphqlHandler
+  fun currentUser(@CurrentUser user: UserPo) = user
 
   @GraphqlHandler
   fun categories(@CurrentUser user: UserPo?, pageable: Pageable): Flow<CategoryPo> {

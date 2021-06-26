@@ -1,4 +1,6 @@
 type Query {
+    """获取当前用户"""
+    currentUser: User
     """文章分类列表，支持分页排序"""
     categories(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Category!]!
     """文章分类总数"""
@@ -13,4 +15,5 @@ type Query {
     category(id: Int!): Category
     """指定id的标签"""
     tag(id: Int!): Tag
+
 }
