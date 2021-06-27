@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.server.configuration.graphql.annotation.*
-import me.rhysxia.explore.server.configuration.graphql.exception.AuthException
+import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.configuration.graphql.exception.DefaultDataFetcherExceptionHandler
 import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.dto.OffsetPage
@@ -251,7 +251,7 @@ class GraphqlConfiguration {
               }
 
               if (!type.isMarkedNullable && value == null) {
-                throw AuthException("Please provide current user.")
+                throw AuthenticationException("Please provide current user.")
               }
 
               return@map value
