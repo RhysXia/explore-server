@@ -69,6 +69,10 @@ class TypedGraphqlError(
       return Builder().errorType(ErrorType.PERMISSION_DENIED)
     }
 
+    fun newUnauthenticatedBuilder(): Builder {
+      return Builder().errorType(ErrorType.UNAUTHENTICATED)
+    }
+
     /**
      * Create new Builder instance to customize error.
      * @return A new TypedGraphQLError.Builder instance to further customize the error. Pre-sets ErrorType.BAD_REQUEST.
