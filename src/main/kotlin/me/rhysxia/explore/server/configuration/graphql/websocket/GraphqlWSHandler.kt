@@ -4,8 +4,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
+import kotlinx.coroutines.runBlocking
 import me.rhysxia.explore.server.configuration.graphql.AuthFilter
 import me.rhysxia.explore.server.configuration.graphql.controller.GraphqlRequestBody
+import me.rhysxia.explore.server.service.TokenService
 import org.dataloader.BatchLoader
 import org.dataloader.DataLoader
 import org.dataloader.DataLoaderRegistry
@@ -26,6 +28,7 @@ class GraphqlWSHandler(
   private val graphql: GraphQL,
   private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
   private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
+  private val tokenService: TokenService
 ) : TextWebSocketHandler() {
 
   companion object {
@@ -54,6 +57,7 @@ class GraphqlWSHandler(
     when (type) {
       GQL_CONNECTION_INIT -> {
         logger.info("Initialized connection for {}", session.id)
+        checkAndSetUser(session, payload)
         session.sendMessage(
           TextMessage(
             jacksonObjectMapper().writeValueAsBytes(
@@ -80,6 +84,28 @@ class GraphqlWSHandler(
     }
   }
 
+  private fun checkAndSetUser(session: WebSocketSession, payload: Any?) {
+    if (session.attributes[AuthFilter.USER_KEY] != null) {
+      return
+    }
+    if (payload !is Map<*, *>) {
+      return
+    }
+
+    val token = payload["token"]
+
+    if (token !is String || token.isBlank()) {
+      return
+    }
+
+    runBlocking {
+      val authUser = tokenService.findAuthUserByToken(token)
+      if (authUser != null) {
+        session.attributes[AuthFilter.USER_KEY] = authUser
+      }
+    }
+  }
+
   private fun handleSubscription(id: String, graphqlRequestBody: GraphqlRequestBody, session: WebSocketSession) {
     val authUser = session.attributes[AuthFilter.USER_KEY]
 
@@ -95,7 +121,7 @@ class GraphqlWSHandler(
 
     val executionInput = ExecutionInput.newExecutionInput()
       .context {
-        if(authUser != null) it.of(AuthFilter.USER_KEY, authUser) else it
+        if (authUser != null) it.of(AuthFilter.USER_KEY, authUser) else it
       }
       .query(graphqlRequestBody.query)
       .variables(graphqlRequestBody.variables)
