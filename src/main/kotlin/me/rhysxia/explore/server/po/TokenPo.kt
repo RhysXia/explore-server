@@ -7,7 +7,9 @@ import java.time.Instant
 @Table("sys_token")
 data class TokenPo(
     @Id
-    val id: String?,
+    val id: Long?,
+
+    val token: String,
 
     val userId: Long,
 

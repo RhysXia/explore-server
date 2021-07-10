@@ -56,7 +56,8 @@ CREATE TABLE rel_user_role
 DROP TABLE IF EXISTS sys_token;
 CREATE TABLE sys_token
 (
-    id         VARCHAR(20) PRIMARY KEY,
+    id         SERIAL PRIMARY KEY,
+    token      VARCHAR(255) NOT NULL,
     user_id    int4      NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
