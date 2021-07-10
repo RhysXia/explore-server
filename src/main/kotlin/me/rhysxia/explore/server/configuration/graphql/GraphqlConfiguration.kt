@@ -283,6 +283,8 @@ class GraphqlConfiguration {
               }
             } catch (ex: InvocationTargetException) {
               future.completeExceptionally(ex.targetException)
+            } catch (ex: Exception) {
+              future.completeExceptionally(ex)
             }
           }
           return@DataFetcher future
