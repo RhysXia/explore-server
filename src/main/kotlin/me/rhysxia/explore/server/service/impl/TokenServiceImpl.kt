@@ -19,7 +19,7 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
 
   @Transactional
   override suspend fun findAuthUserByToken(token: String): AuthUser? {
-    val tokenPo = tokenRepository.findById(token) ?: return null
+    val tokenPo = tokenRepository.findOneByToken(token) ?: return null
 
     val now = Instant.now()
 
@@ -36,7 +36,6 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
     tokenRepository.save(newToken)
 
     return AuthUser(newToken, userPo)
-
   }
 
   @Transactional
@@ -51,7 +50,7 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
 
     val date = Instant.now()
 
-    val token = TokenPo(tokenId, user.id!!, date, date)
+    val token = TokenPo(null, tokenId, user.id!!, date, date)
 
     tokenRepository.save(token)
     return tokenId
