@@ -39,6 +39,11 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
   }
 
   @Transactional
+  override suspend fun logout(token: TokenPo) {
+    tokenRepository.delete(token)
+  }
+
+  @Transactional
   override suspend fun login(username: String, password: String): String {
     val user = userRepository.findByUsername(username) ?: throw ParameterException("用户名或者密码不正确")
 
