@@ -3,6 +3,7 @@ package me.rhysxia.explore.server.configuration.graphql.controller
 import graphql.ExecutionInput
 import graphql.GraphQL
 import me.rhysxia.explore.server.configuration.graphql.AuthFilter
+import me.rhysxia.explore.server.configuration.graphql.GraphqlConfigurator
 import me.rhysxia.explore.server.dto.AuthUser
 import org.dataloader.BatchLoader
 import org.dataloader.DataLoader
@@ -19,6 +20,7 @@ class GraphqlController(
   private val graphql: GraphQL,
   private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
   private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
+  private val graphqlConfigurator: GraphqlConfigurator
 ) {
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
