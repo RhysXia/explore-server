@@ -18,15 +18,16 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.server.configuration.graphql.annotation.*
-import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.configuration.graphql.exception.DefaultDataFetcherExceptionHandler
 import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.dto.OffsetPage
+import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.po.TokenPo
 import me.rhysxia.explore.server.po.UserPo
 import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -44,20 +45,18 @@ import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaType
 
-
+@EnableConfigurationProperties(GraphqlConfigurator::class)
 @Configuration
-class GraphqlConfiguration {
+class GraphqlConfiguration(private val graphqlConfigurator: GraphqlConfigurator) {
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  private val schemaLocation = "classpath*:/graphql/**/*.graphql*"
-
-  fun getSchemaFiles(): Array<Resource> {
+  private fun getSchemaFiles(): Array<Resource> {
     val loader = Thread.currentThread().contextClassLoader
 
     val pathMatchingResourcePatternResolver = PathMatchingResourcePatternResolver(loader)
     return try {
-      pathMatchingResourcePatternResolver.getResources(this.schemaLocation)
+      pathMatchingResourcePatternResolver.getResources(this.graphqlConfigurator.schema.location)
     } catch (e: Exception) {
       emptyArray()
     }
