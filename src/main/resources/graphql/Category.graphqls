@@ -1,0 +1,22 @@
+"""文章分类，每篇文章只有一个分类"""
+type Category {
+    id: Int!,
+
+    """分类名称"""
+    name: String!,
+
+    """分类描述"""
+    description: String,
+
+    """创建时间"""
+    createdAt: Timestamp!,
+
+    """更新时间"""
+    updatedAt: Timestamp!,
+
+    """分类下的文章，支持分页排序"""
+    articles(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Article!]!
+
+    """分类下的文章总数"""
+    articleCount: Int!
+}
