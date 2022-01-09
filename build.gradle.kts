@@ -1,44 +1,47 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-plugins {
-  id("org.springframework.boot") version "2.4.5"
-  id("io.spring.dependency-management") version "1.0.11.RELEASE"
-  kotlin("jvm") version "1.4.32"
-  kotlin("plugin.spring") version "1.4.32"
-}
-
-group = "me.rhysxia.explore.server"
-version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_11
-
-configurations {
-  compileOnly {
-    extendsFrom(configurations.annotationProcessor.get())
+buildscript {
+  repositories {
+    mavenCentral()
   }
 }
 
-repositories {
-  mavenCentral()
+plugins {
+  java
+  id("org.jetbrains.kotlin.jvm") version "1.6.10" apply false
+  id("org.jetbrains.kotlin.plugin.spring") version "1.6.10" apply false
+  id("org.springframework.boot") version "2.4.5" apply false
+  id("io.spring.dependency-management") version "1.0.11.RELEASE" apply false
 }
 
-dependencies {
-  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-  implementation("org.jetbrains.kotlin:kotlin-reflect")
-  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-  implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-  implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
-  implementation("org.springframework.boot:spring-boot-starter-mail")
-  implementation("org.springframework.boot:spring-boot-starter-mail")
-  implementation("org.springframework.boot:spring-boot-starter-websocket")
-  developmentOnly("org.springframework.boot:spring-boot-devtools")
-  implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-  implementation("com.graphql-java:graphql-java:16.2")
-  runtimeOnly("io.r2dbc:r2dbc-postgresql")
-  runtimeOnly("org.postgresql:postgresql")
-  annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-  testImplementation("org.springframework.boot:spring-boot-starter-test")
-  testImplementation("io.projectreactor:reactor-test")
+allprojects {
+  group = "me.rhysxia.explore"
+  version = "1.0-SNAPSHOT"
+}
+
+subprojects {
+
+  repositories {
+    mavenCentral()
+  }
+
+  apply {
+    plugin("org.springframework.boot")
+    plugin("io.spring.dependency-management")
+    plugin("org.jetbrains.kotlin.jvm")
+    plugin("org.jetbrains.kotlin.plugin.spring")
+  }
+
+  java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+  }
+
+  dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+  }
 }
 
 tasks.withType<KotlinCompile> {
