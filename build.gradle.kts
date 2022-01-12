@@ -19,6 +19,18 @@ allprojects {
   version = "1.0-SNAPSHOT"
 }
 
+val applicationModules by extra(
+  listOf(
+    project(":server"),
+  )
+)
+
+configure(subprojects.filterNot { it in applicationModules }) {
+  apply {
+    plugin("java-library")
+  }
+}
+
 subprojects {
 
   repositories {
@@ -41,16 +53,20 @@ subprojects {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    annotationProcessor("org.springframework.boot:spring-boot-autoconfigure-processor")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+  }
+
+
+  tasks.withType<KotlinCompile> {
+    kotlinOptions {
+      freeCompilerArgs = listOf("-Xjsr305=strict")
+      jvmTarget = "11"
+    }
+  }
+
+  tasks.withType<Test> {
+    useJUnitPlatform()
   }
 }
 
-tasks.withType<KotlinCompile> {
-  kotlinOptions {
-    freeCompilerArgs = listOf("-Xjsr305=strict")
-    jvmTarget = "11"
-  }
-}
-
-tasks.withType<Test> {
-  useJUnitPlatform()
-}

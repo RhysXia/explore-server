@@ -1,10 +1,10 @@
 package me.rhysxia.explore.server.graphql.handler
 
-import me.rhysxia.explore.server.core.graphql.annotation.CurrentUser
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlData
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlHandler
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlInput
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlInput
 import me.rhysxia.explore.server.exception.AuthenticationException
+import me.rhysxia.explore.server.graphql.resolver.CurrentUser
 import me.rhysxia.explore.server.po.TokenPo
 import me.rhysxia.explore.server.po.UserPo
 import me.rhysxia.explore.server.service.TokenService

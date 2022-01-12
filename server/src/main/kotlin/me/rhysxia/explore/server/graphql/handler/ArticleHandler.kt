@@ -2,9 +2,9 @@ package me.rhysxia.explore.server.graphql.handler
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlData
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlHandler
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlInput
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlInput
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.CategoryPo
 import me.rhysxia.explore.server.po.CommentPo

@@ -5,7 +5,7 @@ import graphql.schema.Coercing
 import graphql.schema.CoercingParseLiteralException
 import graphql.schema.CoercingParseValueException
 import graphql.schema.CoercingSerializeException
-import me.rhysxia.explore.server.core.graphql.annotation.GraphqlScalar
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlScalar
 import java.time.Instant
 
 @GraphqlScalar("Timestamp")
