@@ -193,8 +193,9 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
           }
 
           dataFetcherParameterResolvers.forEach { dfpr ->
-            if (dfpr.support(type.javaType)) {
-              return@map fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe)
+            val javaType = type.javaType
+            if (dfpr.support(javaType)) {
+              return@map fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, javaType)
             }
           }
 

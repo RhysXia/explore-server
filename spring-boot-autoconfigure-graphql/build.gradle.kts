@@ -1,11 +1,4 @@
-configurations {
-  compileOnly {
-    extendsFrom(configurations.annotationProcessor.get())
-  }
-}
-
 dependencies {
-  annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
   implementation("org.springframework.boot:spring-boot-starter")
   implementation("org.springframework:spring-webflux")
   implementation("org.springframework.boot:spring-boot-starter-websocket")
