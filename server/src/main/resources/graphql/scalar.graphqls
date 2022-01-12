@@ -1,0 +1,2 @@
+"""时间戳类型，展示为数字"""
+scalar Timestamp

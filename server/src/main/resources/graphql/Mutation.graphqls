@@ -1,0 +1,6 @@
+type Mutation {
+    """登录"""
+    login(username: String!, password: String!): String!
+    """登出，只有登录后才能登出，一般都会返回true"""
+    logout: Boolean
+}
