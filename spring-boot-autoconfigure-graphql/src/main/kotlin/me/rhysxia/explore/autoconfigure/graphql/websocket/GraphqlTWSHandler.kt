@@ -33,7 +33,7 @@ class GraphqlTWSHandler(
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  internal val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
+  private val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
 
   override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
     subscriptions[session.id]?.values?.forEach { it.cancel() }
@@ -46,15 +46,15 @@ class GraphqlTWSHandler(
       GQL_CONNECTION_INIT -> {
         logger.info("Initialized connection for {}", session.id)
 //        checkAndSetUser(session, payload)
-//        session.sendMessage(
-//          TextMessage(
-//            jacksonObjectMapper().writeValueAsBytes(
-//              OperationMessage(
-//                GQL_CONNECTION_ACK
-//              )
-//            )
-//          )
-//        )
+        session.sendMessage(
+          TextMessage(
+            jacksonObjectMapper().writeValueAsBytes(
+              OperationMessage(
+                GQL_CONNECTION_ACK
+              )
+            )
+          )
+        )
       }
       GQL_SUBSCRIBE -> {
         val queryPayload = jacksonObjectMapper().convertValue(payload, GraphqlRequestBody::class.java)
@@ -98,12 +98,20 @@ class GraphqlTWSHandler(
 
 //    val authUser = session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY]
 
-    graphqlExecutionProcessor.doExecute(graphqlRequestBody).doOnSuccess {
-      val subscriptionStream: Publisher<ExecutionResult> = it.getData()
+    var map = subscriptions[session.id]
+    if (map === null) {
+      map = mutableMapOf()
+      subscriptions[session.id] = map
+    }
+
+    graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenApply {
+      val subscriptionStream: Publisher<ExecutionResult> = it.getData<Publisher<ExecutionResult>>()
+
+
       subscriptionStream.subscribe(object : Subscriber<ExecutionResult> {
         override fun onSubscribe(s: Subscription) {
           logger.info("Subscription started for {}", id)
-          subscriptions[session.id] = mutableMapOf(Pair(id, s))
+          map[id] = s
 
           s.request(1)
         }
@@ -115,7 +123,7 @@ class GraphqlTWSHandler(
 
           if (session.isOpen) {
             session.sendMessage(jsonMessage)
-            subscriptions[session.id]?.get(id)?.request(1)
+            map.get(id)?.request(1)
           }
         }
 
@@ -139,7 +147,7 @@ class GraphqlTWSHandler(
             session.sendMessage(jsonMessage)
           }
 
-          subscriptions.remove(id)
+          map.remove(id)
         }
       })
     }

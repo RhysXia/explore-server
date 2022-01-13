@@ -8,6 +8,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.server.awaitBody
 import org.springframework.web.reactive.function.server.bodyValueAndAwait
 import org.springframework.web.reactive.function.server.coRouter
+import reactor.kotlin.core.publisher.toMono
 
 @Configuration
 @ConditionalOnWebApplication
@@ -30,7 +31,7 @@ class GraphqlControllerConfiguration {
     (accept(MediaType.APPLICATION_JSON) and graphqlConfigurationProperties.query.endpoint).nest {
       POST("") {
         val req = it.awaitBody<GraphqlRequestBody>()
-        val er = graphqlExecutionProcessor.doExecute(req).awaitSingle()
+        val er = graphqlExecutionProcessor.doExecute(req).toMono().awaitSingle()
         val result = er.toSpecification()
         ok().bodyValueAndAwait(result)
       }

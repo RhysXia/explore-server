@@ -7,15 +7,14 @@ import org.dataloader.BatchLoader
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
 import org.dataloader.MappedBatchLoader
-import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
+import java.util.concurrent.CompletableFuture
 
 class GraphqlExecutionProcessor(
   private val graphql: GraphQL,
   private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
   private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
 ) {
-  fun doExecute(graphqlRequestBody: GraphqlRequestBody): Mono<ExecutionResult> {
+  fun doExecute(graphqlRequestBody: GraphqlRequestBody): CompletableFuture<ExecutionResult> {
     val dataLoaderRegister = DataLoaderRegistry()
 
     batchLoaderMap.forEach { (key, value) ->
@@ -31,7 +30,7 @@ class GraphqlExecutionProcessor(
         .operationName(graphqlRequestBody.operationName).extensions(graphqlRequestBody.extensions)
         .dataLoaderRegistry(dataLoaderRegister).build()
 
-    return graphql.executeAsync(executionInput).toMono()
+    return graphql.executeAsync(executionInput)
   }
 
 }

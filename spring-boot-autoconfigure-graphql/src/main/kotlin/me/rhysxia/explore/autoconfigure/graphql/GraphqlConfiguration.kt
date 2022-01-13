@@ -10,10 +10,11 @@ import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlBatchLoader
@@ -23,7 +24,6 @@ import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -31,9 +31,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import java.io.InputStreamReader
-import java.lang.reflect.InvocationTargetException
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import kotlin.reflect.KParameter
 import kotlin.reflect.KTypeProjection
@@ -86,16 +84,14 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
       }
 
       val loader = MappedBatchLoader<ID, Entity> {
-        val future = CompletableFuture<Map<ID, Entity>>()
-        GlobalScope.launch {
-          val map = graphqlMappedBatchLoader.load(it).toList().toMap()
-          future.complete(map)
+        GlobalScope.future(Dispatchers.Unconfined) {
+          graphqlMappedBatchLoader.load(it).toList().toMap()
         }
-
-        future
       }
       name to loader
     }.toMap()
+
+
   }
 
   @Bean
@@ -135,22 +131,13 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
       }
 
       val loader = BatchLoader<ID, Entity> {
-        val future = CompletableFuture<List<Entity?>>()
-        GlobalScope.launch {
-          val list = graphqlBatchLoader.load(it).toList()
-          future.complete(list)
+        GlobalScope.future(Dispatchers.Unconfined) {
+          graphqlBatchLoader.load(it).toList()
         }
-        future
       }
 
       name to loader
     }.toMap()
-  }
-
-  @ConditionalOnMissingBean(ObjectMapper::class)
-  @Bean()
-  fun objectMapper(): ObjectMapper {
-    return ObjectMapper()
   }
 
   @Bean
@@ -209,34 +196,29 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
+//          val graphqlParentType = dfe.parentType
+//          val isSubscription =
+//            if (graphqlParentType is GraphQLObjectType) graphqlParentType.name == "Subscription" else false
+
           val args = callArgs.map { fn -> fn(dfe) }.toTypedArray()
 
           if (isFuture) {
             return@DataFetcher method.call(*args)
           }
 
-          val future = CompletableFuture<Any>()
-
-          GlobalScope.launch {
-            try {
-              val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
-              if (result is Flow<*>) {
-                val flow = result as Flow<Any>
-                if (isSubscription) {
-                  future.complete(flow.asFlux())
-                } else {
-                  future.complete(flow.toList())
-                }
+          return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
+            val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
+            if (result is Flow<*>) {
+              val flow = result as Flow<Any>
+              if (isSubscription) {
+                flow.asFlux()
               } else {
-                future.complete(result)
+                flow.toList()
               }
-            } catch (ex: InvocationTargetException) {
-              future.completeExceptionally(ex.targetException)
-            } catch (ex: Exception) {
-              future.completeExceptionally(ex)
+            } else {
+              result
             }
           }
-          return@DataFetcher future
         })
       }
     }
