@@ -298,4 +298,5 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
     batchLoaderMap: Map<String, BatchLoader<*, *>>,
     mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
   ) = GraphqlExecutionProcessor(graphql, batchLoaderMap, mappedBatchLoaderMap)
+
 }
