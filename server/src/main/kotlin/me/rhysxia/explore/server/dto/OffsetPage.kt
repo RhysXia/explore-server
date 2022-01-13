@@ -38,5 +38,9 @@ class OffsetPage(private val offset: Long, private val limit: Int, private val s
     return OffsetPage(0, limit, sort)
   }
 
+  override fun withPage(pageNumber: Int): Pageable {
+    return OffsetPage((limit * pageNumber).toLong(), limit, sort)
+  }
+
 
 }

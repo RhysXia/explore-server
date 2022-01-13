@@ -1,13 +1,16 @@
 package me.rhysxia.explore.autoconfigure.graphql
 
+import kotlinx.coroutines.reactive.awaitSingle
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
-import org.springframework.web.reactive.function.server.body
-import org.springframework.web.reactive.function.server.bodyToMono
-import org.springframework.web.reactive.function.server.router
+import org.springframework.web.reactive.function.server.awaitBody
+import org.springframework.web.reactive.function.server.bodyValueAndAwait
+import org.springframework.web.reactive.function.server.coRouter
 
 @Configuration
+@ConditionalOnWebApplication
 class GraphqlControllerConfiguration {
 
 //  @Bean
@@ -20,19 +23,19 @@ class GraphqlControllerConfiguration {
 //  }
 
   @Bean
-  fun graphqlRouter(
-    graphqlConfigurationProperties: GraphqlConfigurationProperties, graphqlExecutionProcessor: GraphqlExecutionProcessor
-  ) = router {
-    accept(MediaType.APPLICATION_JSON).nest {
-      POST(graphqlConfigurationProperties.query.endpoint) { req ->
-        val body = req.bodyToMono<GraphqlRequestBody>().handle<Any> { body, u ->
-          graphqlExecutionProcessor.doExecute(body).doOnNext {
-            u.next(it.toSpecification())
-          }
-        }
-        ok().body(body)
+  fun schemaRouter(
+    graphqlConfigurationProperties: GraphqlConfigurationProperties,
+    graphqlExecutionProcessor: GraphqlExecutionProcessor
+  ) = coRouter {
+    (accept(MediaType.APPLICATION_JSON) and graphqlConfigurationProperties.query.endpoint).nest {
+      POST("") {
+        val req = it.awaitBody<GraphqlRequestBody>()
+        val er = graphqlExecutionProcessor.doExecute(req).awaitSingle()
+        val result = er.toSpecification()
+        ok().bodyValueAndAwait(result)
       }
     }
   }
+
 }
 
