@@ -205,11 +205,9 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
           fun(dfe: DataFetchingEnvironment) = objectMapper.convertValue(dfe.getArgument(name), javaType as Class<*>)
         }
 
+        val isSubscription = parentType.lowercase() == "subscription"
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
-          val graphqlParentType = dfe.parentType
-          val isSubscription =
-            if (graphqlParentType is GraphQLObjectType) graphqlParentType.name == "Subscription" else false
 
           val args = callArgs.map { fn -> fn(dfe) }.toTypedArray()
 
