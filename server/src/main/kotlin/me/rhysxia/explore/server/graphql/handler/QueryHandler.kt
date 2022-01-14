@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlInput
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlQuery
 import me.rhysxia.explore.server.graphql.resolver.CurrentUser
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.CategoryPo
@@ -15,7 +16,7 @@ import me.rhysxia.explore.server.service.TagService
 import org.springframework.data.domain.Pageable
 import java.util.concurrent.CompletableFuture
 
-@GraphqlData("Query")
+@GraphqlQuery
 class QueryHandler(
   private val categoryService: CategoryService,
   private val tagService: TagService,
