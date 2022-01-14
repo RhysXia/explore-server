@@ -36,8 +36,10 @@ class GraphqlTWSHandler(
   private val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
 
   override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
-    subscriptions[session.id]?.values?.forEach { it.cancel() }
     subscriptions.remove(session.id)
+    subscriptions[session.id]?.values?.forEach {
+      it.cancel()
+    }
   }
 
   override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
@@ -45,7 +47,6 @@ class GraphqlTWSHandler(
     when (type) {
       GQL_CONNECTION_INIT -> {
         logger.info("Initialized connection for {}", session.id)
-//        checkAndSetUser(session, payload)
         session.sendMessage(
           TextMessage(
             jacksonObjectMapper().writeValueAsBytes(
@@ -72,47 +73,22 @@ class GraphqlTWSHandler(
     }
   }
 
-//  private fun checkAndSetUser(session: WebSocketSession, payload: Any?) {
-//    if (session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY] != null) {
-//      return
-//    }
-//    if (payload !is Map<*, *>) {
-//      return
-//    }
-//
-//    val token = payload["token"]
-//
-//    if (token !is String || token.isBlank()) {
-//      return
-//    }
-//
-//    runBlocking {
-//      val authUser = tokenService.findAuthUserByToken(token)
-//      if (authUser != null) {
-//        session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY] = authUser
-//      }
-//    }
-//  }
 
   private fun handleSubscription(id: String, graphqlRequestBody: GraphqlRequestBody, session: WebSocketSession) {
 
-//    val authUser = session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY]
+    graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenAccept {
+      val publisher = it.getData<Publisher<ExecutionResult>>()
 
-    var map = subscriptions[session.id]
-    if (map === null) {
-      map = mutableMapOf()
-      subscriptions[session.id] = map
-    }
-
-    graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenApply {
-      val subscriptionStream: Publisher<ExecutionResult> = it.getData<Publisher<ExecutionResult>>()
-
-
-      subscriptionStream.subscribe(object : Subscriber<ExecutionResult> {
+      publisher.subscribe(object : Subscriber<ExecutionResult> {
         override fun onSubscribe(s: Subscription) {
           logger.info("Subscription started for {}", id)
-          map[id] = s
-
+          var map = subscriptions[session.id]
+          if (map === null) {
+            map = mutableMapOf(Pair(id, s))
+            subscriptions[session.id] = map
+          } else {
+            map[id] = s
+          }
           s.request(1)
         }
 
@@ -123,7 +99,7 @@ class GraphqlTWSHandler(
 
           if (session.isOpen) {
             session.sendMessage(jsonMessage)
-            map.get(id)?.request(1)
+            subscriptions[session.id]?.get(id)?.request(1)
           }
         }
 
@@ -136,6 +112,7 @@ class GraphqlTWSHandler(
           if (session.isOpen) {
             session.sendMessage(jsonMessage)
           }
+          subscriptions.remove(id)
         }
 
         override fun onComplete() {
@@ -147,12 +124,11 @@ class GraphqlTWSHandler(
             session.sendMessage(jsonMessage)
           }
 
-          map.remove(id)
+          subscriptions.remove(id)
         }
       })
     }
   }
 }
-
 
 

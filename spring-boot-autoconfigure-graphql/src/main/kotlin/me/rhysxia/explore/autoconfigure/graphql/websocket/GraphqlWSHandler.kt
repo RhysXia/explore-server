@@ -72,76 +72,55 @@ class GraphqlWSHandler(
     }
   }
 
-//  private fun checkAndSetUser(session: WebSocketSession, payload: Any?) {
-//    if (session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY] != null) {
-//      return
-//    }
-//    if (payload !is Map<*, *>) {
-//      return
-//    }
-//
-//    val token = payload["token"]
-//
-//    if (token !is String || token.isBlank()) {
-//      return
-//    }
-//
-//    runBlocking {
-//      val authUser = tokenService.findAuthUserByToken(token)
-//      if (authUser != null) {
-//        session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY] = authUser
-//      }
-//    }
-//  }
-
   private fun handleSubscription(id: String, graphqlRequestBody: GraphqlRequestBody, session: WebSocketSession) {
-//    val authUser = session.attributes[me.rhysxia.explore.autoconfigure.graphql.AuthFilter.USER_KEY]
 
-    val executionResult = graphqlExecutionProcessor.doExecute(graphqlRequestBody)
-//    val subscriptionStream: Publisher<ExecutionResult> = executionResult
-//
-//    subscriptionStream.subscribe(object : Subscriber<ExecutionResult> {
-//      override fun onSubscribe(s: Subscription) {
-//        logger.info("Subscription started for {}", id)
-//        subscriptions[session.id] = mutableMapOf(Pair(id, s))
-//
-//        s.request(1)
-//      }
-//
-//      override fun onNext(er: ExecutionResult) {
-//        val message = OperationMessage(GQL_DATA, DataPayload(er.getData()), id)
-//        val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
-//        logger.debug("Sending subscription data: {}", jsonMessage)
-//
-//        if (session.isOpen) {
-//          session.sendMessage(jsonMessage)
-//          subscriptions[session.id]?.get(id)?.request(1)
-//        }
-//      }
-//
-//      override fun onError(t: Throwable) {
-//        logger.error("Error on subscription {}", id, t)
-//        val message = OperationMessage(GQL_ERROR, DataPayload(null, listOf(t.message!!)), id)
-//        val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
-//        logger.debug("Sending subscription error: {}", jsonMessage)
-//
-//        if (session.isOpen) {
-//          session.sendMessage(jsonMessage)
-//        }
-//      }
-//
-//      override fun onComplete() {
-//        logger.info("Subscription completed for {}", id)
-//        val message = OperationMessage(GQL_COMPLETE, null, id)
-//        val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
-//
-//        if (session.isOpen) {
-//          session.sendMessage(jsonMessage)
-//        }
-//
-//        subscriptions.remove(id)
-//      }
-//    })
+    graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenAccept {
+      val subscriptionStream: Publisher<ExecutionResult> = it.getData()
+
+      subscriptionStream.subscribe(object : Subscriber<ExecutionResult> {
+        override fun onSubscribe(s: Subscription) {
+          logger.info("Subscription started for {}", id)
+          subscriptions[session.id] = mutableMapOf(Pair(id, s))
+
+          s.request(1)
+        }
+
+        override fun onNext(er: ExecutionResult) {
+          val message = OperationMessage(GQL_DATA, DataPayload(er.getData()), id)
+          val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
+          logger.debug("Sending subscription data: {}", jsonMessage)
+
+          if (session.isOpen) {
+            session.sendMessage(jsonMessage)
+            subscriptions[session.id]?.get(id)?.request(1)
+          }
+        }
+
+        override fun onError(t: Throwable) {
+          logger.error("Error on subscription {}", id, t)
+          val message = OperationMessage(GQL_ERROR, DataPayload(null, listOf(t.message!!)), id)
+          val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
+          logger.debug("Sending subscription error: {}", jsonMessage)
+
+          if (session.isOpen) {
+            session.sendMessage(jsonMessage)
+          }
+        }
+
+        override fun onComplete() {
+          logger.info("Subscription completed for {}", id)
+          val message = OperationMessage(GQL_COMPLETE, null, id)
+          val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
+
+          if (session.isOpen) {
+            session.sendMessage(jsonMessage)
+          }
+
+          subscriptions.remove(id)
+        }
+      })
+    }
+
   }
 }
 

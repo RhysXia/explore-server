@@ -15,13 +15,16 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
+import me.rhysxia.explore.autoconfigure.graphql.exception.GraphqlTypeException
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlBatchLoader
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlDataFetcherParameterResolver
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlMappedBatchLoader
 import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
+import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -30,13 +33,17 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
+import reactor.core.publisher.Flux
+import reactor.kotlin.core.publisher.toFlux
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletionStage
+import java.util.stream.Stream
 import kotlin.reflect.KParameter
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaType
+import kotlin.streams.toList
 
 @Configuration
 @EnableConfigurationProperties(GraphqlConfigurationProperties::class)
@@ -196,10 +203,6 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
-//          val graphqlParentType = dfe.parentType
-//          val isSubscription =
-//            if (graphqlParentType is GraphQLObjectType) graphqlParentType.name == "Subscription" else false
-
           val args = callArgs.map { fn -> fn(dfe) }.toTypedArray()
 
           if (isFuture) {
@@ -208,15 +211,35 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
           return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
             val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
-            if (result is Flow<*>) {
-              val flow = result as Flow<Any>
-              if (isSubscription) {
-                flow.asFlux()
-              } else {
-                flow.toList()
+            if (isSubscription) {
+              when (result) {
+                is Flow<*> -> {
+                  return@future (result as Flow<Any>).asFlux()
+                }
+                is Stream<*> -> {
+                  return@future (result).toFlux()
+                }
+                is Publisher<*> -> {
+                  return@future (result)
+                }
+                else -> {
+                  throw GraphqlTypeException("Subscription Data Fetcher has to return type Flow, Publisher or Stream.")
+                }
               }
-            } else {
-              result
+            }
+            when (result) {
+              is Flow<*> -> {
+                return@future (result).toList()
+              }
+              is Stream<*> -> {
+                return@future (result).toList()
+              }
+              is Flux<*> -> {
+                return@future (result).asFlow().toList()
+              }
+              else -> {
+                return@future result
+              }
             }
           }
         })
