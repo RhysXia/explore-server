@@ -31,6 +31,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import reactor.core.publisher.Flux
@@ -41,7 +42,10 @@ import java.util.concurrent.CompletionStage
 import java.util.stream.Stream
 import kotlin.reflect.KParameter
 import kotlin.reflect.KTypeProjection
-import kotlin.reflect.full.*
+import kotlin.reflect.full.callSuspend
+import kotlin.reflect.full.createType
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.jvm.javaType
 import kotlin.streams.toList
 
@@ -64,7 +68,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
   }
 
   private fun <T : Any> getGraphqlLoaderName(instance: T): String? {
-    val graphqlLoader = instance::class.findAnnotation<GraphqlLoader>()
+    val graphqlLoader = AnnotationUtils.findAnnotation(instance::class.java, GraphqlLoader::class.java)
     if (graphqlLoader === null) {
       return null
     }
@@ -156,11 +160,19 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
     val codeRegistry = GraphQLCodeRegistry.newCodeRegistry()
     ctx.getBeansWithAnnotation(GraphqlData::class.java).forEach {
       val bean = it.value
-      val rootParentType = bean::class.findAnnotation<GraphqlData>()!!.parentType
+
+      val graphqlData = AnnotationUtils.findAnnotation(bean::class.java, GraphqlData::class.java)
+
+      if (graphqlData === null) {
+        return@forEach
+      }
+
+      val rootParentType = graphqlData.parentType
+
       val dfeType = DataFetchingEnvironment::class.createType()
 
       bean::class.memberFunctions.forEach beanForEach@{ method ->
-        val graphqlHandler = method.findAnnotation<GraphqlHandler>()
+        val graphqlHandler = AnnotationUtils.findAnnotation(method::class.java, GraphqlHandler::class.java)
         if (graphqlHandler === null) {
           return@beanForEach
         }
@@ -193,13 +205,13 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
             }
           }
 
-          val graphqlInput = parameter.findAnnotation<GraphqlInput>()
+          val graphqlInput = AnnotationUtils.findAnnotation(parameter::class.java, GraphqlInput::class.java)
           val name = if (graphqlInput === null) parameter.name else graphqlInput.name
           val javaType = parameter.type.javaType
           fun(dfe: DataFetchingEnvironment) = objectMapper.convertValue(dfe.getArgument(name), javaType as Class<*>)
         }
 
-        val isSubscription = parentType.lowercase() == "subscription"
+        val isSubscription = parentType === "Subscription"
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
@@ -251,7 +263,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
   @Bean
   fun scalars(coercingList: List<Coercing<*, *>>): List<GraphQLScalarType> {
     return coercingList.mapNotNull {
-      val graphqlScalar = it::class.findAnnotation<GraphqlScalar>()
+      val graphqlScalar = AnnotationUtils.findAnnotation(it::class.java, GraphqlScalar::class.java)
 
       if (graphqlScalar === null) {
         logger.debug(
