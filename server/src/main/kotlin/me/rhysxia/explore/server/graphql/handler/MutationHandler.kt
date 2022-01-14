@@ -1,15 +1,15 @@
 package me.rhysxia.explore.server.graphql.handler
 
-import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlInput
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlMutation
 import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.graphql.resolver.CurrentUser
 import me.rhysxia.explore.server.po.TokenPo
 import me.rhysxia.explore.server.po.UserPo
 import me.rhysxia.explore.server.service.TokenService
 
-@GraphqlData("Mutation")
+@GraphqlMutation
 class MutationHandler(private val tokenService: TokenService) {
 
   @GraphqlHandler
