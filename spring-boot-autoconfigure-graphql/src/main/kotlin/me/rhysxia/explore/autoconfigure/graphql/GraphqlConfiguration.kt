@@ -42,11 +42,10 @@ import java.util.concurrent.CompletionStage
 import java.util.stream.Stream
 import kotlin.reflect.KParameter
 import kotlin.reflect.KTypeProjection
-import kotlin.reflect.full.callSuspend
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.isSubtypeOf
-import kotlin.reflect.full.memberFunctions
+import kotlin.reflect.full.*
+import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.javaType
+import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
 @Configuration
@@ -172,7 +171,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
       val dfeType = DataFetchingEnvironment::class.createType()
 
       bean::class.memberFunctions.forEach beanForEach@{ method ->
-        val graphqlHandler = AnnotationUtils.findAnnotation(method::class.java, GraphqlHandler::class.java)
+        val graphqlHandler = AnnotationUtils.findAnnotation(method.javaMethod!!, GraphqlHandler::class.java)
         if (graphqlHandler === null) {
           return@beanForEach
         }
@@ -205,13 +204,13 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
             }
           }
 
-          val graphqlInput = AnnotationUtils.findAnnotation(parameter::class.java, GraphqlInput::class.java)
+          val graphqlInput = parameter.findAnnotation<GraphqlInput>()
           val name = if (graphqlInput === null) parameter.name else graphqlInput.name
           val javaType = parameter.type.javaType
           fun(dfe: DataFetchingEnvironment) = objectMapper.convertValue(dfe.getArgument(name), javaType as Class<*>)
         }
 
-        val isSubscription = parentType === "Subscription"
+        val isSubscription = parentType == "Subscription"
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
