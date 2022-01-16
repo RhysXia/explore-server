@@ -26,11 +26,11 @@ import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
@@ -45,12 +45,11 @@ import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.javaType
-import kotlin.reflect.jvm.jvmErasure
 import kotlin.streams.toList
 
 @Configuration
 @EnableConfigurationProperties(GraphqlConfigurationProperties::class)
-@ImportAutoConfiguration(value = [GraphqlControllerConfiguration::class, WebSocketConfiguration::class])
+@Import(value = [GraphqlControllerConfiguration::class, GraphqlWebSocketConfiguration::class])
 class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlConfigurationProperties) {
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
