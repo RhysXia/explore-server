@@ -1,23 +1,24 @@
 package me.rhysxia.explore.autoconfigure.graphql.websocket
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import graphql.ExecutionResult
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlExecutionProcessor
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlRequestBody
 import org.reactivestreams.Publisher
-import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import org.slf4j.LoggerFactory
-import org.springframework.web.socket.CloseStatus
-import org.springframework.web.socket.TextMessage
-import org.springframework.web.socket.WebSocketSession
-import org.springframework.web.socket.handler.TextWebSocketHandler
+import org.springframework.web.reactive.socket.WebSocketHandler
+import org.springframework.web.reactive.socket.WebSocketSession
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toFlux
 import java.util.concurrent.ConcurrentHashMap
 
 class GraphqlWSHandler(
-  private val graphqlExecutionProcessor: GraphqlExecutionProcessor
 //  private val tokenService: TokenService
-) : TextWebSocketHandler() {
+  private val objectMapper: ObjectMapper, private val graphqlExecutionProcessor: GraphqlExecutionProcessor
+) : WebSocketHandler {
 
   companion object {
     private const val GQL_CONNECTION_INIT = "connection_init"
@@ -33,94 +34,104 @@ class GraphqlWSHandler(
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  internal val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
+  private val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
 
-  override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
-    subscriptions[session.id]?.values?.forEach { it.cancel() }
-    subscriptions.remove(session.id)
-  }
 
-  override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-    val (type, payload, id) = jacksonObjectMapper().readValue(message.payload, OperationMessage::class.java)
-    when (type) {
-      GQL_CONNECTION_INIT -> {
-        logger.info("Initialized connection for {}", session.id)
-//        checkAndSetUser(session, payload)
-        session.sendMessage(
-          TextMessage(
-            jacksonObjectMapper().writeValueAsBytes(
-              OperationMessage(
-                GQL_CONNECTION_ACK
+  override fun handle(session: WebSocketSession): Mono<Void> {
+
+    return session.receive().map { it.payloadAsText }.map { objectMapper.readValue(it, OperationMessage::class.java) }
+      .doOnNext { (type, payload, id) ->
+        when (type) {
+          GQL_CONNECTION_INIT -> {
+            logger.info("Initialized connection for {}", session.id)
+            session.send(
+              Flux.just(
+                session.textMessage(
+                  objectMapper.writeValueAsString(
+                    OperationMessage(
+                      GQL_CONNECTION_ACK
+                    )
+                  )
+                )
+              )
+            )
+          }
+          GQL_START -> {
+            val queryPayload = jacksonObjectMapper().convertValue(payload, GraphqlRequestBody::class.java)
+            handleSubscription(id!!, queryPayload, session)
+          }
+          GQL_STOP -> {
+            subscriptions[session.id]?.get(id)?.cancel()
+            subscriptions.remove(id)
+          }
+          GQL_CONNECTION_TERMINATE -> {
+            logger.info("Terminated session " + session.id)
+            session.close()
+          }
+          else -> session.send(
+            Flux.just(
+              session.textMessage(
+                objectMapper.writeValueAsString(OperationMessage("error"))
               )
             )
           )
-        )
-      }
-      GQL_START -> {
-        val queryPayload = jacksonObjectMapper().convertValue(payload, GraphqlRequestBody::class.java)
-        handleSubscription(id!!, queryPayload, session)
-      }
-      GQL_STOP -> {
-        subscriptions[session.id]?.get(id)?.cancel()
-        subscriptions.remove(id)
-      }
-      GQL_CONNECTION_TERMINATE -> {
-        logger.info("Terminated session " + session.id)
-        session.close()
-      }
-      else -> session.sendMessage(TextMessage(jacksonObjectMapper().writeValueAsBytes(OperationMessage("error"))))
-    }
+        }
+      }.then()
+
   }
+
+  override fun getSubProtocols(): List<String> {
+    return listOf("graphql-ws")
+  }
+
 
   private fun handleSubscription(id: String, graphqlRequestBody: GraphqlRequestBody, session: WebSocketSession) {
 
     graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenAccept {
-      val subscriptionStream: Publisher<ExecutionResult> = it.getData()
-
-      subscriptionStream.subscribe(object : Subscriber<ExecutionResult> {
-        override fun onSubscribe(s: Subscription) {
-          logger.info("Subscription started for {}", id)
-          subscriptions[session.id] = mutableMapOf(Pair(id, s))
-
-          s.request(1)
+      val publisher = it.getData<Publisher<ExecutionResult>>()
+      publisher.toFlux().doOnSubscribe { s ->
+        var map = subscriptions[session.id]
+        if (map === null) {
+          map = mutableMapOf(Pair(id, s))
+          subscriptions[session.id] = map
+        } else {
+          map[id] = s
         }
+        s.request(1)
+      }.doOnNext { er ->
+        val message = OperationMessage(GQL_DATA, DataPayload(er.getData()), id)
+        val jsonMessage = session.textMessage(objectMapper.writeValueAsString(message))
+        logger.debug("Sending subscription data: {}", jsonMessage)
 
-        override fun onNext(er: ExecutionResult) {
-          val message = OperationMessage(GQL_DATA, DataPayload(er.getData()), id)
-          val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
-          logger.debug("Sending subscription data: {}", jsonMessage)
-
-          if (session.isOpen) {
-            session.sendMessage(jsonMessage)
+        if (session.isOpen) {
+          session.send(Flux.just(jsonMessage)).doOnNext {
             subscriptions[session.id]?.get(id)?.request(1)
           }
         }
+      }.doOnError { t ->
+        logger.error("Error on subscription {}", id, t)
+        val message = OperationMessage(GQL_ERROR, DataPayload(null, listOf(t.message!!)), id)
+        val jsonMessage = session.textMessage((objectMapper.writeValueAsString(message)))
+        logger.debug("Sending subscription error: {}", jsonMessage)
 
-        override fun onError(t: Throwable) {
-          logger.error("Error on subscription {}", id, t)
-          val message = OperationMessage(GQL_ERROR, DataPayload(null, listOf(t.message!!)), id)
-          val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
-          logger.debug("Sending subscription error: {}", jsonMessage)
+        if (session.isOpen) {
+          session.send(Flux.just(jsonMessage))
+        }
+        subscriptions.remove(id)
+      }.doOnComplete {
+        logger.info("Subscription completed for {}", id)
+        val message = OperationMessage(GQL_COMPLETE, null, id)
+        val jsonMessage = session.textMessage(objectMapper.writeValueAsString(message))
 
-          if (session.isOpen) {
-            session.sendMessage(jsonMessage)
-          }
+        if (session.isOpen) {
+          session.send(Flux.just(jsonMessage))
         }
 
-        override fun onComplete() {
-          logger.info("Subscription completed for {}", id)
-          val message = OperationMessage(GQL_COMPLETE, null, id)
-          val jsonMessage = TextMessage(jacksonObjectMapper().writeValueAsBytes(message))
-
-          if (session.isOpen) {
-            session.sendMessage(jsonMessage)
-          }
-
-          subscriptions.remove(id)
-        }
-      })
+        subscriptions.remove(id)
+      }.doOnCancel {
+        subscriptions.remove(id)
+      }
     }
-
   }
 }
 
