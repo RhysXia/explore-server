@@ -1,7 +1,8 @@
 package me.rhysxia.explore.autoconfigure.graphql.websocket
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.ExecutionResult
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlExecutionProcessor
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlRequestBody
@@ -13,6 +14,7 @@ import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toFlux
+import reactor.kotlin.core.publisher.toMono
 import java.util.concurrent.ConcurrentHashMap
 
 class GraphqlWSHandler(
@@ -39,44 +41,75 @@ class GraphqlWSHandler(
 
   override fun handle(session: WebSocketSession): Mono<Void> {
 
-    return session.receive().map { it.payloadAsText }.map { objectMapper.readValue(it, OperationMessage::class.java) }
-      .doOnNext { (type, payload, id) ->
+    val message = session.receive()
+      .map { it.payloadAsText }
+      .map { objectMapper.readValue<OperationMessage>(it) }
+      .map { (type, payload, id) ->
         when (type) {
           GQL_CONNECTION_INIT -> {
             logger.info("Initialized connection for {}", session.id)
-            session.send(
-              Flux.just(
-                session.textMessage(
-                  objectMapper.writeValueAsString(
-                    OperationMessage(
-                      GQL_CONNECTION_ACK
-                    )
-                  )
-                )
-              )
+            objectMapper.writeValueAsString(
+              OperationMessage(GQL_CONNECTION_ACK)
             )
           }
           GQL_START -> {
-            val queryPayload = jacksonObjectMapper().convertValue(payload, GraphqlRequestBody::class.java)
-            handleSubscription(id!!, queryPayload, session)
+            val requestBody = objectMapper.convertValue<GraphqlRequestBody>(payload!!)
+            graphqlExecutionProcessor.doExecute(requestBody).toMono().map { executionResult ->
+              val publisher = executionResult.getData<Publisher<ExecutionResult>>()
+              publisher.toFlux()
+                .map {
+                  OperationMessage(GQL_DATA, DataPayload(it.getData()), id)
+                }
+            }
           }
-          GQL_STOP -> {
-            subscriptions[session.id]?.get(id)?.cancel()
-            subscriptions.remove(id)
-          }
-          GQL_CONNECTION_TERMINATE -> {
-            logger.info("Terminated session " + session.id)
-            session.close()
-          }
-          else -> session.send(
-            Flux.just(
-              session.textMessage(
-                objectMapper.writeValueAsString(OperationMessage("error"))
-              )
+          else -> {
+            objectMapper.writeValueAsString(
+              OperationMessage("error")
             )
-          )
+          }
         }
-      }.then()
+      }.map { session.textMessage(objectMapper.writeValueAsString(it)) }
+
+    return session.send(message)
+
+//    return session.receive().map { it.payloadAsText }.map { objectMapper.readValue(it, OperationMessage::class.java) }
+//      .doOnNext { (type, payload, id) ->
+//        when (type) {
+//          GQL_CONNECTION_INIT -> {
+//            logger.info("Initialized connection for {}", session.id)
+//            session.send(
+//              Flux.just(
+//                session.textMessage(
+//                  objectMapper.writeValueAsString(
+//                    OperationMessage(
+//                      GQL_CONNECTION_ACK
+//                    )
+//                  )
+//                )
+//              )
+//            )
+//          }
+//          GQL_START -> {
+//            val queryPayload = jacksonObjectMapper().convertValue(payload, GraphqlRequestBody::class.java)
+//            handleSubscription(id!!, queryPayload, session)
+//          }
+//          GQL_STOP -> {
+//            subscriptions[session.id]?.get(id)?.cancel()
+//            subscriptions.remove(id)
+//          }
+//          GQL_CONNECTION_TERMINATE -> {
+//            logger.info("Terminated session " + session.id)
+//            session.close()
+//          }
+//          else -> session.send(
+//            Flux.just(
+//              session.textMessage(
+//                objectMapper.writeValueAsString(OperationMessage("error"))
+//              )
+//            )
+//          )
+//        }
+//      }.then()
 
   }
 
