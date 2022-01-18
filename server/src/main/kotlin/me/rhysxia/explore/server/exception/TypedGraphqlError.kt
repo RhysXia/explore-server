@@ -1,4 +1,4 @@
-package me.rhysxia.explore.autoconfigure.graphql.exception
+package me.rhysxia.explore.server.exception
 
 import graphql.ErrorClassification
 import graphql.GraphQLError

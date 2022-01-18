@@ -2,6 +2,8 @@ package me.rhysxia.explore.autoconfigure.graphql
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.GraphQL
+import graphql.execution.DataFetcherExceptionHandler
+import graphql.execution.SimpleDataFetcherExceptionHandler
 import graphql.execution.SubscriptionExecutionStrategy
 import graphql.execution.instrumentation.ChainedInstrumentation
 import graphql.execution.instrumentation.Instrumentation
@@ -26,6 +28,7 @@ import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -278,12 +281,18 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
       GraphQLScalarType.newScalar().name(name).coercing(it).build()
     }
-
   }
 
   @Bean
+  @ConditionalOnMissingBean(DataFetcherExceptionHandler::class)
+  fun dataFetcherExceptionHandler() = SimpleDataFetcherExceptionHandler()
+
+  @Bean
   fun graphql(
-    codeRegistry: GraphQLCodeRegistry, scalars: List<GraphQLScalarType>, instrumentations: List<Instrumentation>
+    codeRegistry: GraphQLCodeRegistry,
+    scalars: List<GraphQLScalarType>,
+    instrumentations: List<Instrumentation>,
+    dataFetcherExceptionHandler: DataFetcherExceptionHandler?
   ): GraphQL {
     val schemaParser = SchemaParser()
 
@@ -303,6 +312,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
     val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
     return GraphQL.newGraphQL(schema).instrumentation(chainedInstrumentation)
+      .defaultDataFetcherExceptionHandler(dataFetcherExceptionHandler)
       .subscriptionExecutionStrategy(SubscriptionExecutionStrategy()).build()
   }
 

@@ -35,6 +35,7 @@ class CurrentDataFetcherParameterResolver : GraphqlDataFetcherParameterResolver<
 
     val request = ctx.getServerRequest()
     val session = ctx.getWebSocketSession()
+    throw RuntimeException("aaa")
 
     return UserPo(
       1,
