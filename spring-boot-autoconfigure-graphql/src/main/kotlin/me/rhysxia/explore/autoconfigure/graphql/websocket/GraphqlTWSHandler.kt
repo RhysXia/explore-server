@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.ExecutionResult
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlExecutionProcessor
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlRequestBody
+import me.rhysxia.explore.autoconfigure.graphql.WEBSOCKET_SESSION_KEY
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
@@ -14,7 +15,6 @@ import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.util.concurrent.ConcurrentHashMap
 
 class GraphqlTWSHandler(
   private val objectMapper: ObjectMapper,
@@ -35,8 +35,6 @@ class GraphqlTWSHandler(
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  private val subscriptions = ConcurrentHashMap<String, MutableMap<String, Subscription>>()
-
   override fun handle(session: WebSocketSession): Mono<Void> {
     val message = session.receive().map { it.payloadAsText }.map {
       val (type, payload, id) = objectMapper.readValue<OperationMessage>(it)
@@ -48,7 +46,9 @@ class GraphqlTWSHandler(
         GQL_SUBSCRIBE -> {
           Flux.create { sink ->
             val graphqlRequestBody = objectMapper.convertValue<GraphqlRequestBody>(payload!!)
-            graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenApply { executionResult ->
+            graphqlExecutionProcessor.doExecute(graphqlRequestBody) { builder ->
+              builder.of(WEBSOCKET_SESSION_KEY, session)
+            }.thenApply { executionResult ->
               executionResult.getData<Publisher<ExecutionResult>>().subscribe(object : Subscriber<ExecutionResult> {
                 private lateinit var subscription: Subscription
                 override fun onSubscribe(s: Subscription) {

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.ExecutionResult
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlExecutionProcessor
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlRequestBody
+import me.rhysxia.explore.autoconfigure.graphql.WEBSOCKET_SESSION_KEY
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
@@ -17,8 +18,7 @@ import reactor.core.publisher.Mono
 
 class GraphqlWSHandler(
 //  private val tokenService: TokenService
-  private val objectMapper: ObjectMapper,
-  private val graphqlExecutionProcessor: GraphqlExecutionProcessor
+  private val objectMapper: ObjectMapper, private val graphqlExecutionProcessor: GraphqlExecutionProcessor
 ) : WebSocketHandler {
 
   companion object {
@@ -45,7 +45,9 @@ class GraphqlWSHandler(
         GQL_START -> {
           Flux.create { sink ->
             val graphqlRequestBody = objectMapper.convertValue<GraphqlRequestBody>(payload!!)
-            graphqlExecutionProcessor.doExecute(graphqlRequestBody).thenApply { executionResult ->
+            graphqlExecutionProcessor.doExecute(graphqlRequestBody) { builder ->
+              builder.of(WEBSOCKET_SESSION_KEY, session)
+            }.thenApply { executionResult ->
               executionResult.getData<Publisher<ExecutionResult>>().subscribe(object : Subscriber<ExecutionResult> {
                 private lateinit var subscription: Subscription
                 override fun onSubscribe(s: Subscription) {
