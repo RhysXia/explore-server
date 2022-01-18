@@ -1,0 +1,21 @@
+debug: true
+logging:
+  level:
+    io.r2dbc.postgresql.QUERY: DEBUG # for queries
+    io.r2dbc.postgresql.PARAM: DEBUG # for parameters
+spring:
+  r2dbc:
+    password: root
+    username: root
+    url: r2dbc:postgresql://nas.8910.xyz:4000/blog
+  redis:
+    host: nas.8910.xyz
+    port: 6379
+
+#  r2dbc:
+#    password: root
+#    username: postgres
+#    url: r2dbc:postgresql://localhost:5432/blog
+#  redis:
+#    host: nas.8910.xyz
+#    port: 6379
