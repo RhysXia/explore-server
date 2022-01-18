@@ -9,7 +9,7 @@ import me.rhysxia.explore.server.service.ArticleService
 
 @GraphqlLoader("article")
 class ArticleLoader(private val articleService: ArticleService) : GraphqlMappedBatchLoader<Long, ArticlePo> {
-  override fun load(ids: Set<Long>): Flow<Pair<Long, ArticlePo>> {
-    return articleService.findAllById(ids).map { it.id!! to it }
+  override fun load(keys: Set<Long>): Flow<Pair<Long, ArticlePo>> {
+    return articleService.findAllById(keys).map { it.id!! to it }
   }
 }

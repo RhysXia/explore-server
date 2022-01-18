@@ -27,7 +27,9 @@ class GraphqlControllerConfiguration {
   ) = coRouter {
     (graphqlConfigurationProperties.query.endpoint) {
       val req = it.awaitBody<GraphqlRequestBody>()
-      val er = graphqlExecutionProcessor.doExecute(req).toMono().awaitSingle()
+      val er = graphqlExecutionProcessor.doExecute(req) { builder ->
+        builder.of(SERVER_REQUEST_KEY, it)
+      }.toMono().awaitSingle()
       val result = er.toSpecification()
       ok().bodyValueAndAwait(result)
     }
