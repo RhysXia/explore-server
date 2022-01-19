@@ -2,7 +2,6 @@ package me.rhysxia.explore.server.graphql.handler
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
-import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlSubscription
 import me.rhysxia.explore.server.service.CategoryService

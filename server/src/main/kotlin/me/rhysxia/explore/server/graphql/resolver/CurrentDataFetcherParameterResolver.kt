@@ -1,8 +1,7 @@
 package me.rhysxia.explore.server.graphql.resolver
 
 import graphql.schema.DataFetchingEnvironment
-import me.rhysxia.explore.autoconfigure.graphql.getServerRequest
-import me.rhysxia.explore.autoconfigure.graphql.getWebSocketSession
+import me.rhysxia.explore.autoconfigure.graphql.getRequestContainer
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlDataFetcherParameterResolver
 import me.rhysxia.explore.server.po.TokenPo
 import me.rhysxia.explore.server.po.UserPo
@@ -33,8 +32,9 @@ class CurrentDataFetcherParameterResolver : GraphqlDataFetcherParameterResolver<
   override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Any {
     val ctx = dfe.graphQlContext
 
-    val request = ctx.getServerRequest()
-    val session = ctx.getWebSocketSession()
+    val requestContainer = ctx.getRequestContainer()
+
+    val headers = requestContainer.headers
 
     return UserPo(
       1,

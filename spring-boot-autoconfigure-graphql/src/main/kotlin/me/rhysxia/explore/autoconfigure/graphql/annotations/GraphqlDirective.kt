@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 @Component
-annotation class GraphqlData(
-  val parentType: String,
+annotation class GraphqlDirective(
+  /**
+   * directive名称，不传表示对所有地方生效
+   */
+  val name: String = "",
 )

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.ExecutionResult
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlExecutionProcessor
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlRequestBody
-import me.rhysxia.explore.autoconfigure.graphql.WEBSOCKET_SESSION_KEY
+import me.rhysxia.explore.autoconfigure.graphql.fromWebSocketSession
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
@@ -46,7 +46,7 @@ class GraphqlWSHandler(
           Flux.create { sink ->
             val graphqlRequestBody = objectMapper.convertValue<GraphqlRequestBody>(payload!!)
             graphqlExecutionProcessor.doExecute(graphqlRequestBody) { builder ->
-              builder.of(WEBSOCKET_SESSION_KEY, session)
+              builder.fromWebSocketSession(session)
             }.thenApply { executionResult ->
               executionResult.getData<Publisher<ExecutionResult>>().subscribe(object : Subscriber<ExecutionResult> {
                 private lateinit var subscription: Subscription
