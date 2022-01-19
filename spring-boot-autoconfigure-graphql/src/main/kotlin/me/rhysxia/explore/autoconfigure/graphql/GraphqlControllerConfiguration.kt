@@ -50,6 +50,9 @@ class GraphqlControllerConfiguration {
         val variables = objectMapper.readValue<Map<String, Any>>(variablesString)
         val extensions = objectMapper.readValue<Map<String, Any>>(extensionsString)
 
+        it.queryParams()
+        val session = it.session().awaitSingle()
+
         val er =
           graphqlExecutionProcessor.doExecute(
             GraphqlRequestBody(
