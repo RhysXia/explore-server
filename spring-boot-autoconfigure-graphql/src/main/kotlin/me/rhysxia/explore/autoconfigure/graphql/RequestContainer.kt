@@ -3,9 +3,16 @@ package me.rhysxia.explore.autoconfigure.graphql
 import graphql.GraphQLContext
 import org.springframework.http.HttpCookie
 import org.springframework.http.HttpHeaders
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.util.MultiValueMap
+import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.server.WebSession
+import java.io.UnsupportedEncodingException
+import java.net.URLDecoder
+import java.util.*
+import java.util.regex.Pattern
 
 interface SessionContainer {
   val attributes: MutableMap<String, Any>
@@ -13,6 +20,13 @@ interface SessionContainer {
 
 interface RequestContainer {
   val attributes: MutableMap<String, Any>
+
+  val queryParams: Map<String, List<String>>
+
+  /**
+   * 获取指定key的值list中的第一个
+   */
+  fun getQueryParam(name: String): String?
 
   val headers: HttpHeaders
   val cookies: Map<String, List<HttpCookie>>
@@ -27,6 +41,12 @@ internal fun GraphQLContext.Builder.fromServerRequest(request: ServerRequest, we
   val container = object : RequestContainer {
     override val attributes: MutableMap<String, Any>
       get() = request.attributes()
+    override val queryParams: Map<String, List<String>>
+      get() = request.queryParams()
+
+    override fun getQueryParam(name: String): String? {
+      return request.queryParam(name).orElse(null)
+    }
 
     override val headers: HttpHeaders
       get() = request.headers().asHttpHeaders()
@@ -47,15 +67,65 @@ internal fun GraphQLContext.Builder.fromServerRequest(request: ServerRequest, we
 }
 
 internal fun GraphQLContext.Builder.fromWebSocketSession(webSocketSession: WebSocketSession) {
+  val handshakeInfo = webSocketSession.handshakeInfo
+
   val container = object : RequestContainer {
+    private val QUERY_PATTERN = Pattern.compile("([^&=]+)(=?)([^&]+)?")
+
+    private var innerQueryParams: Map<String, List<String>>? = null
+
+    @Suppress("DEPRECATION")
+    private fun decodeQueryParam(value: String): String {
+      return try {
+        URLDecoder.decode(value, "UTF-8")
+      } catch (ex: UnsupportedEncodingException) {
+        // Should never happen, but we got a platform default fallback anyway.
+        URLDecoder.decode(value)
+      }
+    }
+
+    private fun initQueryParams(): Map<String, List<String>> {
+      val map: MultiValueMap<String, String> = LinkedMultiValueMap()
+      val query: String? = handshakeInfo.uri.rawQuery
+      if (query != null) {
+        val matcher = QUERY_PATTERN.matcher(query)
+        while (matcher.find()) {
+          val name: String = decodeQueryParam(matcher.group(1))
+          val eq = matcher.group(2)
+          var value = matcher.group(3)
+          value = value?.let { decodeQueryParam(it) } ?: if (StringUtils.hasLength(eq)) "" else null
+          map.add(name, value)
+        }
+      }
+      val unmodifiableMap = Collections.unmodifiableMap(map)
+      innerQueryParams = unmodifiableMap
+
+      return unmodifiableMap
+    }
+
     override val attributes: MutableMap<String, Any>
-      get() = webSocketSession.handshakeInfo.attributes
+      get() = handshakeInfo.attributes
+    override val queryParams: Map<String, List<String>>
+      get() {
+        if (innerQueryParams !== null) {
+          return innerQueryParams as Map<String, List<String>>
+        }
+        return initQueryParams()
+      }
+
+    override fun getQueryParam(name: String): String? {
+      val params = queryParams[name]
+      if (params.isNullOrEmpty()) {
+        return null
+      }
+      return params[0]
+    }
 
     override val headers: HttpHeaders
-      get() = webSocketSession.handshakeInfo.headers
+      get() = handshakeInfo.headers
 
     override val cookies: Map<String, List<HttpCookie>>
-      get() = webSocketSession.handshakeInfo.cookies
+      get() = handshakeInfo.cookies
 
     override val session: SessionContainer
       get() = object : SessionContainer {
@@ -71,4 +141,4 @@ internal fun GraphQLContext.Builder.fromWebSocketSession(webSocketSession: WebSo
 }
 
 
-fun GraphQLContext.getRequestContainer() = this.get<RequestContainer>(REQUEST_CONTAINER_KEY)
+fun GraphQLContext.getRequestContainer(): RequestContainer = this.get(REQUEST_CONTAINER_KEY)
