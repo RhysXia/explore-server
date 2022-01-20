@@ -18,6 +18,7 @@ import kotlinx.coroutines.future.future
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.asFlux
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
 import me.rhysxia.explore.autoconfigure.graphql.exception.GraphqlTypeException
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlBatchLoader
@@ -217,7 +218,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
           return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
             val args =
-              callArgs.map { fn -> fn(dfe) }.map { arg -> if (arg is Mono<*>) arg.awaitSingle() else arg }
+              callArgs.map { fn -> fn(dfe) }.map { arg -> if (arg is Mono<*>) arg.awaitSingleOrNull() else arg }
                 .toTypedArray()
 
             var result = (if (isSuspend) method.callSuspend(*args) else method.call(*args))

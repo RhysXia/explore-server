@@ -18,7 +18,7 @@ import kotlin.reflect.jvm.javaType
 
 @Component
 class CurrentDataFetcherParameterResolver(private val tokenService: TokenService) :
-  GraphqlDataFetcherParameterResolver<Any?> {
+  GraphqlDataFetcherParameterResolver<Any> {
   override fun support(parameter: KParameter): Boolean {
     val currentUser = parameter.findAnnotation<CurrentUser>()
     if (currentUser === null) {
@@ -34,7 +34,7 @@ class CurrentDataFetcherParameterResolver(private val tokenService: TokenService
     return javaType.isAssignableFrom(UserPo::class.java) || javaType.isAssignableFrom(TokenPo::class.java)
   }
 
-  override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<Any?> {
+  override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<Any> {
     return mono(Dispatchers.Unconfined) {
       val ctx = dfe.graphQlContext
 
@@ -61,7 +61,7 @@ class CurrentDataFetcherParameterResolver(private val tokenService: TokenService
         }
       }
 
-      if (currentUser.required || !parameter.isOptional) {
+      if (currentUser.required || !parameter.type.isMarkedNullable) {
         throw AuthenticationException("Current Request is not authentication.")
       }
       return@mono null
