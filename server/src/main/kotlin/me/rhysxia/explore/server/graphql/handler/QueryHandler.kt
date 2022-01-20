@@ -24,7 +24,7 @@ class QueryHandler(
 ) {
 
   @GraphqlHandler
-  fun currentUser(@CurrentUser user: UserPo) = user
+  fun currentUser(@CurrentUser user: UserPo?) = user
 
   @GraphqlHandler
   fun categories(@CurrentUser user: UserPo?, pageable: Pageable): Flow<CategoryPo> {

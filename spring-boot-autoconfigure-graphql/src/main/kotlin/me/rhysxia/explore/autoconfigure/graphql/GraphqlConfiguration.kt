@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.asFlux
@@ -37,6 +38,7 @@ import reactor.core.publisher.Flux
 import reactor.kotlin.core.publisher.toFlux
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.stream.Stream
 import kotlin.reflect.KParameter
@@ -186,7 +188,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         val isFuture =
           method.returnType.isSubtypeOf(CompletionStage::class.createType(listOf(KTypeProjection(null, null))))
 
-        val callArgs: List<(dfe: DataFetchingEnvironment) -> Any> = method.parameters.map { parameter ->
+        val callArgs: List<(dfe: DataFetchingEnvironment) -> Any?> = method.parameters.map { parameter ->
           val type = parameter.type
           if (parameter.kind == KParameter.Kind.INSTANCE) {
             return@map fun(_: DataFetchingEnvironment) = bean
@@ -211,14 +213,19 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
-          val args = callArgs.map { fn -> fn(dfe) }.toTypedArray()
-
-          if (isFuture) {
-            return@DataFetcher method.call(*args)
-          }
 
           return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
-            val result: Any? = if (isSuspend) method.callSuspend(*args) else method.call(*args)
+            val args =
+              callArgs.map { fn -> fn(dfe) }.map { arg -> if (arg is CompletableFuture<*>) arg.await() else arg }
+                .toTypedArray()
+
+            var result = (if (isSuspend) method.callSuspend(*args) else method.call(*args))
+
+            if (isFuture) {
+              val future = result as CompletableFuture<*>
+              result = future.await()
+            }
+
             if (isSubscription) {
               when (result) {
                 is Flow<*> -> {

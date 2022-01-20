@@ -13,7 +13,7 @@ class ServerApplication {
   fun tracingInstrumentation() = TracingInstrumentation()
 
   @Bean
-  fun maxQueryComplexityInstrumentation() = MaxQueryComplexityInstrumentation(10)
+  fun maxQueryComplexityInstrumentation() = MaxQueryComplexityInstrumentation(100)
 }
 
 fun main(args: Array<String>) {
