@@ -62,7 +62,7 @@ class CurrentDataFetcherParameterResolver(private val tokenService: TokenService
       }
 
       if (currentUser.required || !parameter.type.isMarkedNullable) {
-        throw AuthenticationException("Current Request is not authentication.")
+        throw AuthenticationException("Current Request is not authenticated.")
       }
       return@mono null
 
