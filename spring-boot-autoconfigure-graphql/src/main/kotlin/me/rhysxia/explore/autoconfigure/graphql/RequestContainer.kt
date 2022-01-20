@@ -8,10 +8,10 @@ import org.springframework.util.MultiValueMap
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.socket.WebSocketSession
-import org.springframework.web.server.WebSession
 import java.io.UnsupportedEncodingException
 import java.net.URLDecoder
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.regex.Pattern
 
 interface SessionContainer {
@@ -30,15 +30,25 @@ interface RequestContainer {
 
   val headers: HttpHeaders
   val cookies: Map<String, List<HttpCookie>>
-  val session: SessionContainer
+  val session: CompletableFuture<SessionContainer>
 
   val originalRequest: Any
 }
 
 internal const val REQUEST_CONTAINER_KEY = "__REQUEST_CONTAINER_KEY__"
 
-internal fun GraphQLContext.Builder.fromServerRequest(request: ServerRequest, webSession: WebSession) {
+internal fun GraphQLContext.Builder.fromServerRequest(request: ServerRequest) {
+
+  val sessionFuture = request.session().map {
+    object : SessionContainer {
+      override val attributes: MutableMap<String, Any>
+        get() = it.attributes
+    } as SessionContainer
+  }.toFuture()
+
   val container = object : RequestContainer {
+
+
     override val attributes: MutableMap<String, Any>
       get() = request.attributes()
     override val queryParams: Map<String, List<String>>
@@ -54,11 +64,8 @@ internal fun GraphQLContext.Builder.fromServerRequest(request: ServerRequest, we
     override val cookies: Map<String, List<HttpCookie>>
       get() = request.cookies()
 
-    override val session: SessionContainer
-      get() = object : SessionContainer {
-        override val attributes: MutableMap<String, Any>
-          get() = webSession.attributes
-      }
+    override val session: CompletableFuture<SessionContainer>
+      get() = sessionFuture
     override val originalRequest: Any
       get() = request
   }
@@ -68,6 +75,12 @@ internal fun GraphQLContext.Builder.fromServerRequest(request: ServerRequest, we
 
 internal fun GraphQLContext.Builder.fromWebSocketSession(webSocketSession: WebSocketSession) {
   val handshakeInfo = webSocketSession.handshakeInfo
+
+  val sessionFuture: CompletableFuture<SessionContainer> = CompletableFuture.completedFuture(object : SessionContainer {
+    override val attributes: MutableMap<String, Any>
+      get() = webSocketSession.attributes
+
+  })
 
   val container = object : RequestContainer {
     private val QUERY_PATTERN = Pattern.compile("([^&=]+)(=?)([^&]+)?")
@@ -127,12 +140,8 @@ internal fun GraphQLContext.Builder.fromWebSocketSession(webSocketSession: WebSo
     override val cookies: Map<String, List<HttpCookie>>
       get() = handshakeInfo.cookies
 
-    override val session: SessionContainer
-      get() = object : SessionContainer {
-        override val attributes: MutableMap<String, Any>
-          get() = webSocketSession.attributes
-
-      }
+    override val session: CompletableFuture<SessionContainer>
+      get() = sessionFuture
     override val originalRequest: Any
       get() = webSocketSession
   }

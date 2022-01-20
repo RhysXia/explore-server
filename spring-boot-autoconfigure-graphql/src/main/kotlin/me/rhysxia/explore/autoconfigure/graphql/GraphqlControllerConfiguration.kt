@@ -26,10 +26,8 @@ class GraphqlControllerConfiguration {
       POST("") {
         val req = it.awaitBody<GraphqlRequestBody>()
 
-        val session = it.session().awaitSingle()
-
         val er = graphqlExecutionProcessor.doExecute(req) { builder ->
-          builder.fromServerRequest(it, session)
+          builder.fromServerRequest(it)
         }.toMono().awaitSingle()
         val result = er.toSpecification()
         ok().bodyValueAndAwait(result)
@@ -50,7 +48,7 @@ class GraphqlControllerConfiguration {
             variables, extensions, operationName, query
           )
         ) { builder ->
-          builder.fromServerRequest(it, session)
+          builder.fromServerRequest(it)
         }.toMono().awaitSingle()
         val result = er.toSpecification()
         ok().bodyValueAndAwait(result)
