@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.asFlux
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
 import me.rhysxia.explore.autoconfigure.graphql.exception.GraphqlTypeException
@@ -35,6 +36,7 @@ import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toFlux
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
@@ -213,10 +215,9 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
         codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
-
           return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
             val args =
-              callArgs.map { fn -> fn(dfe) }.map { arg -> if (arg is CompletableFuture<*>) arg.await() else arg }
+              callArgs.map { fn -> fn(dfe) }.map { arg -> if (arg is Mono<*>) arg.awaitSingle() else arg }
                 .toTypedArray()
 
             var result = (if (isSuspend) method.callSuspend(*args) else method.call(*args))
