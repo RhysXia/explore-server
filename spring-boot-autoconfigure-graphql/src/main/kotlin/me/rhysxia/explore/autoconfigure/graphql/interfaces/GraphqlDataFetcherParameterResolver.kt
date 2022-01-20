@@ -1,9 +1,9 @@
 package me.rhysxia.explore.autoconfigure.graphql.interfaces
 
 import graphql.schema.DataFetchingEnvironment
-import java.lang.reflect.Type
+import kotlin.reflect.KParameter
 
-interface GraphqlDataFetcherParameterResolver<T: Any> {
-  fun support(parameterType: Type): Boolean
-  fun resolve(dfe: DataFetchingEnvironment, parameterType: Type): T
+interface GraphqlDataFetcherParameterResolver<T : Any> {
+  fun support(parameter: KParameter): Boolean
+  fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): T
 }

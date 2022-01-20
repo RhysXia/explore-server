@@ -2,14 +2,13 @@ package me.rhysxia.explore.autoconfigure.graphql
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.GraphQL
+import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.SubscriptionExecutionStrategy
 import graphql.execution.instrumentation.ChainedInstrumentation
 import graphql.execution.instrumentation.Instrumentation
 import graphql.schema.*
-import graphql.schema.idl.RuntimeWiring
-import graphql.schema.idl.SchemaGenerator
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeDefinitionRegistry
+import graphql.schema.idl.*
+import graphql.schema.visibility.GraphqlFieldVisibility
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
@@ -197,9 +196,8 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
           }
 
           dataFetcherParameterResolvers.forEach { dfpr ->
-            val javaType = type.javaType
-            if (dfpr.support(javaType)) {
-              return@map fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, javaType)
+            if (dfpr.support(parameter)) {
+              return@map fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, parameter)
             }
           }
 
@@ -279,12 +277,16 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
       GraphQLScalarType.newScalar().name(name).coercing(it).build()
     }
-
   }
 
   @Bean
   fun graphql(
-    codeRegistry: GraphQLCodeRegistry, scalars: List<GraphQLScalarType>, instrumentations: List<Instrumentation>
+    codeRegistry: GraphQLCodeRegistry,
+    scalars: List<GraphQLScalarType>,
+    instrumentations: List<Instrumentation>,
+    directives: List<SchemaDirectiveWiring>,
+    dataFetcherExceptionHandler: DataFetcherExceptionHandler?,
+    graphqlFieldVisibility: GraphqlFieldVisibility?
   ): GraphQL {
     val schemaParser = SchemaParser()
 
@@ -298,13 +300,35 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
     val runtimeWiring = RuntimeWiring.newRuntimeWiring().codeRegistry(codeRegistry)
 
+    directives.forEach {
+      val graphqlDirective = AnnotationUtils.findAnnotation(it::class.java, GraphqlDirective::class.java)
+      if (graphqlDirective !== null) {
+        val name = graphqlDirective.name
+        if (name.isNotBlank()) {
+          runtimeWiring.directive(name, it)
+          return@forEach
+        }
+      }
+      runtimeWiring.directiveWiring(it)
+    }
+
+    if (graphqlFieldVisibility !== null) {
+      runtimeWiring.fieldVisibility(graphqlFieldVisibility)
+    }
+
     scalars.forEach { runtimeWiring.scalar(it) }
 
     val chainedInstrumentation = ChainedInstrumentation(instrumentations)
 
     val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
-    return GraphQL.newGraphQL(schema).instrumentation(chainedInstrumentation)
-      .subscriptionExecutionStrategy(SubscriptionExecutionStrategy()).build()
+    val graphqlBuilder = GraphQL.newGraphQL(schema).instrumentation(chainedInstrumentation)
+      .subscriptionExecutionStrategy(SubscriptionExecutionStrategy())
+
+    if (dataFetcherExceptionHandler !== null) {
+      graphqlBuilder.defaultDataFetcherExceptionHandler(dataFetcherExceptionHandler)
+    }
+
+    return graphqlBuilder.build()
   }
 
   @Bean
