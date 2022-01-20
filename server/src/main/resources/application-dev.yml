@@ -1,4 +1,3 @@
-debug: true
 logging:
   level:
     io.r2dbc.postgresql.QUERY: DEBUG # for queries

@@ -3,6 +3,7 @@ package me.rhysxia.explore.autoconfigure.graphql
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
+import graphql.GraphQLContext
 import org.dataloader.BatchLoader
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
@@ -14,7 +15,10 @@ class GraphqlExecutionProcessor(
   private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
   private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
 ) {
-  fun doExecute(graphqlRequestBody: GraphqlRequestBody): CompletableFuture<ExecutionResult> {
+  fun doExecute(
+    graphqlRequestBody: GraphqlRequestBody,
+    handleCtx: (ctx: GraphQLContext.Builder) -> Unit
+  ): CompletableFuture<ExecutionResult> {
     val dataLoaderRegister = DataLoaderRegistry()
 
     batchLoaderMap.forEach { (key, value) ->
@@ -28,9 +32,12 @@ class GraphqlExecutionProcessor(
     val executionInput =
       ExecutionInput.newExecutionInput().query(graphqlRequestBody.query).variables(graphqlRequestBody.variables)
         .operationName(graphqlRequestBody.operationName).extensions(graphqlRequestBody.extensions)
-        .dataLoaderRegistry(dataLoaderRegister).build()
+        .dataLoaderRegistry(dataLoaderRegister)
+        .graphQLContext {
+          handleCtx(it)
+        }
+        .build()
 
     return graphql.executeAsync(executionInput)
   }
-
 }
