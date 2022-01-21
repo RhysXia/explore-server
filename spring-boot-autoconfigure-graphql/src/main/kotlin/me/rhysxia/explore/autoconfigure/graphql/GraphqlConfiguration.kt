@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.asFlux
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
@@ -204,7 +203,8 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
           dataFetcherParameterResolvers.forEach { dfpr ->
             if (dfpr.support(parameter)) {
-              return@map fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, parameter)
+              return@map @Suppress("ReactiveStreamsUnusedPublisher")
+              fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, parameter)
             }
           }
 
@@ -233,9 +233,11 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
             if (isSubscription) {
               when (result) {
                 is Flow<*> -> {
+                  @Suppress("UNCHECKED_CAST", "ReactiveStreamsUnusedPublisher")
                   return@future (result as Flow<Any>).asFlux()
                 }
                 is Stream<*> -> {
+                  @Suppress("ReactiveStreamsUnusedPublisher")
                   return@future (result).toFlux()
                 }
                 is Publisher<*> -> {
@@ -297,6 +299,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
     instrumentations: List<Instrumentation>,
     directives: List<SchemaDirectiveWiring>,
     dataFetcherExceptionHandler: DataFetcherExceptionHandler?,
+    @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     graphqlFieldVisibility: GraphqlFieldVisibility?
   ): GraphQL {
     val schemaParser = SchemaParser()
