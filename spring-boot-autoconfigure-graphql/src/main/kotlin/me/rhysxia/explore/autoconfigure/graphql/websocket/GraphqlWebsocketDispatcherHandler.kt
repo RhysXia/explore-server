@@ -5,8 +5,7 @@ import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
-class GraphqlWebsocketDispatcherHandler(private val handlers: List<WebSocketHandler>) :
-  WebSocketHandler {
+class GraphqlWebsocketDispatcherHandler(private val handlers: List<WebSocketHandler>) : WebSocketHandler {
 
   override fun handle(session: WebSocketSession): Mono<Void> {
     val subProtocol = session.handshakeInfo.subProtocol
