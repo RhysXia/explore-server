@@ -13,6 +13,9 @@ data class GraphqlConfigurationProperties(
   data class Schema(val location: String = "classpath*:/graphql/**/*.graphql*")
 
   data class Query(val endpoint: String = "/graphql")
-  data class Subscription(val endpoint: String = "/subscription")
+  data class Subscription(
+    val endpoint: String = "/subscription",
+    val connectionInitWaitTimeout: Long = 1000
+  )
 }
 
