@@ -8,6 +8,8 @@ buildscript {
 
 plugins {
   java
+  idea
+  eclipse
   id("org.jetbrains.kotlin.jvm") version "1.6.10" apply false
   id("org.jetbrains.kotlin.plugin.spring") version "1.6.10" apply false
   id("org.springframework.boot") version "2.6.2" apply false
@@ -50,7 +52,6 @@ subprojects {
     annotationProcessor("org.springframework.boot:spring-boot-autoconfigure-processor")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
   }
-
 
   tasks.withType<KotlinCompile> {
     kotlinOptions {

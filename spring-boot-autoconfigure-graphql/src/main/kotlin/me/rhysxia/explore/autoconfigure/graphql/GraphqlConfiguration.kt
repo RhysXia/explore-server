@@ -9,6 +9,7 @@ import graphql.execution.instrumentation.Instrumentation
 import graphql.schema.*
 import graphql.schema.idl.*
 import graphql.schema.visibility.GraphqlFieldVisibility
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
@@ -51,6 +52,7 @@ import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.javaType
 import kotlin.streams.toList
 
+@DelicateCoroutinesApi
 @Configuration
 @EnableConfigurationProperties(GraphqlConfigurationProperties::class)
 @Import(value = [GraphqlControllerConfiguration::class, GraphqlWebSocketConfiguration::class])

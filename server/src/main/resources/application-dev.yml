@@ -10,7 +10,6 @@ spring:
   redis:
     host: nas.8910.xyz
     port: 6379
-
 #  r2dbc:
 #    password: root
 #    username: postgres

@@ -1,0 +1,22 @@
+{
+  "properties": [
+    {
+      "name": "graphql.schema.location",
+      "type": "java.lang.String",
+      "description": "Schema location.",
+      "defaultValue": "classpath*:/graphql/**/*.graphql*"
+    },
+    {
+      "name": "graphql.query.endpoint",
+      "type": "java.lang.String",
+      "description": "Query api endpoint.",
+      "defaultValue": "/graphql"
+    },
+    {
+      "name": "graphql.subscription.endpoint",
+      "type": "java.lang.String",
+      "description": "Subscription api endpoint.",
+      "defaultValue": "/subscription"
+    }
+  ]
+}
