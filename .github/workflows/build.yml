@@ -35,12 +35,15 @@ jobs:
           path: server/build/libs
 
       - name: Set up QEMU
+        if: ${{ github.event_name == 'push' }}
         uses: docker/setup-qemu-action@v1
 
       - name: Set up Docker Buildx
+        if: ${{ github.event_name == 'push' }}
         uses: docker/setup-buildx-action@v1
 
       - name: login to docker hub
+        if: ${{ github.event_name == 'push' }}
         uses: docker/login-action@v1
         # 配置登录信息，secrets 变量在 github settings -> secrets 中设置
         with:
@@ -48,6 +51,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push
+        if: ${{ github.event_name == 'push' }}
         id: docker_build
         uses: docker/build-push-action@v2
         with:
