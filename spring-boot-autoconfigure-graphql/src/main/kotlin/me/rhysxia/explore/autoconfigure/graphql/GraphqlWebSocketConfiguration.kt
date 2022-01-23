@@ -24,8 +24,8 @@ class GraphqlWebSocketConfiguration {
     val map: Map<String, WebSocketHandler> = mapOf(
       graphqlConfigurationProperties.subscription.endpoint to GraphqlWebsocketDispatcherHandler(
         listOf(
-          GraphqlTWSHandler(objectMapper, graphqlExecutionProcessor, graphqlConfigurationProperties),
-          GraphqlWSHandler(objectMapper, graphqlExecutionProcessor, graphqlConfigurationProperties)
+          GraphqlTWSHandler(objectMapper, graphqlExecutionProcessor),
+          GraphqlWSHandler(objectMapper, graphqlExecutionProcessor)
         )
       )
     )
