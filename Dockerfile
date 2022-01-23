@@ -1,6 +1,6 @@
-MAINTAINER RhysXia
-
 FROM java:11
+
+MAINTAINER RhysXia
 
 ADD server/build/libs/server-1.0-SNAPSHOT.jar /explore-server.jar
 
