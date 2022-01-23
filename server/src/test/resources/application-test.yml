@@ -1,0 +1,8 @@
+logging:
+  level:
+    io.r2dbc.h2: DEBUG
+spring:
+  r2dbc:
+    url: r2dbc:h2:mem:///explore
+    properties:
+      SCHEMA_SEARCH_PATH: classpath*:/schema.sql

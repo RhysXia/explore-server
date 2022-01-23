@@ -7,5 +7,6 @@ dependencies {
   runtimeOnly("org.postgresql:postgresql")
   developmentOnly("org.springframework.boot:spring-boot-devtools")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("io.r2dbc:r2dbc-h2")
   testImplementation("io.projectreactor:reactor-test")
 }
