@@ -15,7 +15,6 @@ data class GraphqlConfigurationProperties(
   data class Query(val endpoint: String = "/graphql")
   data class Subscription(
     val endpoint: String = "/subscription",
-    val connectionInitWaitTimeout: Long = 1000
   )
 }
 

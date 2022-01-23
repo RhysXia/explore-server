@@ -4,11 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.ExecutionResult
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import me.rhysxia.explore.autoconfigure.graphql.GraphqlConfigurationProperties
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlExecutionProcessor
 import me.rhysxia.explore.autoconfigure.graphql.GraphqlRequestBody
 import me.rhysxia.explore.autoconfigure.graphql.fromWebSocketSession
@@ -19,9 +14,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.util.concurrent.ConcurrentHashMap
 
-class GraphqlWebsocketEnhancer private constructor() {
+class GraphqlWebsocketEnhancer private constructor(
+  private val objectMapper: ObjectMapper,
+  private val graphqlExecutionProcessor: GraphqlExecutionProcessor,
+) {
   private lateinit var beforePair: Pair<String, String>
   private lateinit var runPair: Pair<String, String>
   private lateinit var stopReceiveCode: String
@@ -33,13 +30,8 @@ class GraphqlWebsocketEnhancer private constructor() {
 
   private val logger = LoggerFactory.getLogger(this.javaClass)
 
-  private val initJobMap: MutableMap<String, Job> = ConcurrentHashMap()
-
   fun execute(
     session: WebSocketSession,
-    objectMapper: ObjectMapper,
-    graphqlExecutionProcessor: GraphqlExecutionProcessor,
-    graphqlConfigurationProperties: GraphqlConfigurationProperties
   ): Mono<Void> {
     val message = session.receive()
       .map { objectMapper.readValue<OperationMessage>(it.payloadAsText) }
@@ -47,21 +39,9 @@ class GraphqlWebsocketEnhancer private constructor() {
         when (type) {
           beforePair.first -> {
             logger.info("Initialized connection for {}", session.id)
-            Flux.create { sink ->
-              sink.next(OperationMessage(beforePair.second))
-              val job = GlobalScope.launch {
-                delay(graphqlConfigurationProperties.subscription.connectionInitWaitTimeout)
-                if (!sink.isCancelled && session.isOpen) {
-                  sink.next(OperationMessage(errorRespondCode, listOf("4408: Connection initialisation timeout")))
-                  sink.complete()
-                }
-                initJobMap.remove(id)
-              }
-              initJobMap[id!!] = job
-            }
+            Flux.just(OperationMessage(beforePair.second))
           }
           runPair.first -> {
-            initJobMap.remove(id)?.cancel()
             Flux.create { sink ->
               val graphqlRequestBody = objectMapper.convertValue<GraphqlRequestBody>(payload!!)
               graphqlExecutionProcessor.doExecute(graphqlRequestBody) { builder ->
@@ -117,23 +97,26 @@ class GraphqlWebsocketEnhancer private constructor() {
           else -> {
             if (terminateReceiveCode !== null && type === terminateReceiveCode) {
               logger.info("Terminated session " + session.id)
-              Flux.empty<OperationMessage>().doOnComplete {
-                session.close()
-              }
+              Flux.empty<OperationMessage>().doOnComplete { session.close().block() }
             } else {
               Flux.just(OperationMessage(errorRespondCode, DataPayload(null, listOf("error")), id))
-
             }
           }
         }
       }.flatMap { a -> a }
 
-    return session.send(message.map { session.textMessage(objectMapper.writeValueAsString(it)) })
+    return session.send(message.map {
+      session.textMessage(objectMapper.writeValueAsString(it))
+    })
   }
 
-  class Builder {
+  class Builder(
+    objectMapper: ObjectMapper,
+    graphqlExecutionProcessor: GraphqlExecutionProcessor,
+  ) {
 
-    private val enhancer: GraphqlWebsocketEnhancer = GraphqlWebsocketEnhancer()
+    private val enhancer: GraphqlWebsocketEnhancer =
+      GraphqlWebsocketEnhancer(objectMapper, graphqlExecutionProcessor)
 
     fun before(receiveCode: String, respondCode: String): Builder {
       enhancer.beforePair = receiveCode to respondCode
@@ -153,6 +136,7 @@ class GraphqlWebsocketEnhancer private constructor() {
     fun errorRespondCode(respondCode: String): Builder {
       enhancer.errorRespondCode = respondCode
       return this
+      1
     }
 
     fun completeRespondCode(respondCode: String): Builder {
@@ -168,6 +152,5 @@ class GraphqlWebsocketEnhancer private constructor() {
     fun build(): GraphqlWebsocketEnhancer {
       return enhancer
     }
-
   }
 }
