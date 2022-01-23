@@ -97,7 +97,9 @@ class GraphqlWebsocketEnhancer private constructor(
           else -> {
             if (terminateReceiveCode !== null && type === terminateReceiveCode) {
               logger.info("Terminated session " + session.id)
-              Flux.empty<OperationMessage>().doOnComplete { session.close().block() }
+              Flux.empty<OperationMessage>().doOnComplete {
+                session.close().subscribe()
+              }
             } else {
               Flux.just(OperationMessage(errorRespondCode, DataPayload(null, listOf("error")), id))
             }
