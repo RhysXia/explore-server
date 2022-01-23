@@ -1,4 +1,4 @@
-name: Test
+name: Build
 on:
   pull_request:
   push:
@@ -24,3 +24,12 @@ jobs:
 
       - name: test
         run: ./gradlew test
+
+      - name: jar
+        run: ./gradlew bootJar
+
+      - name: archive jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: server.jar
+          path: server/build/libs
