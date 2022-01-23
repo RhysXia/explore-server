@@ -33,11 +33,11 @@ class GraphqlWebSocketConfiguration {
     val handlerMapping = SimpleUrlHandlerMapping()
     handlerMapping.order = 1
     handlerMapping.urlMap = map
+//
+//    val corsConfiguration = CorsConfiguration()
+//    corsConfiguration.addAllowedOrigin(CorsConfiguration.ALL)
 
-    val corsConfiguration = CorsConfiguration()
-    corsConfiguration.addAllowedOrigin(CorsConfiguration.ALL)
-
-    handlerMapping.setCorsConfigurations(mapOf(graphqlConfigurationProperties.query.endpoint to corsConfiguration))
+//    handlerMapping.setCorsConfigurations(mapOf(graphqlConfigurationProperties.query.endpoint to corsConfiguration))
 
     return handlerMapping
   }
