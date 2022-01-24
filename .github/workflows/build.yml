@@ -50,7 +50,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build dockerfile (with push)
+      - name: Build dockerfile with push
+        if: ${{ github.event_name == 'push' }}
         # 构建镜像，用buildx可以同时构建X86和ARM架构的镜像，然后推送到hub.docker.com
         run: |
           fullCommit="${{ github.event.commits[0].id }}" && \
