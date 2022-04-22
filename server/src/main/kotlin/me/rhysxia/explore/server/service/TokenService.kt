@@ -4,7 +4,10 @@ import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.po.TokenPo
 
 interface TokenService {
-  suspend fun findAuthUserByToken(token: String): AuthUser?
+  /**
+   * 获取登录用户信息
+   */
+  suspend fun findCurrentUserByToken(token: String): AuthUser?
 
   suspend fun login(username: String, password: String): String
 

@@ -3,7 +3,6 @@ package me.rhysxia.explore.server.service.impl
 import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.exception.ParameterException
 import me.rhysxia.explore.server.po.TokenPo
-import me.rhysxia.explore.server.po.UserStatus
 import me.rhysxia.explore.server.repository.TokenRepository
 import me.rhysxia.explore.server.repository.UserRepository
 import me.rhysxia.explore.server.service.TokenService
@@ -11,6 +10,7 @@ import me.rhysxia.explore.server.utils.PasswordUtils
 import me.rhysxia.explore.server.utils.TokenUtils
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.Instant
 
 @Service
@@ -18,24 +18,23 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
   TokenService {
 
   @Transactional
-  override suspend fun findAuthUserByToken(token: String): AuthUser? {
-    val tokenPo = tokenRepository.findOneByToken(token) ?: return null
-
-    val now = Instant.now()
+  override suspend fun findCurrentUserByToken(token: String): AuthUser? {
+    // 七天过期
+    val tokenPo = tokenRepository.findOneById(token, Duration.ofDays(7)) ?: return null
 
     val userPo = userRepository.findById(tokenPo.userId)
 
-    if (userPo == null || userPo.status != UserStatus.ACTIVATED || now.epochSecond - tokenPo.updatedAt.epochSecond > 1 * 60 * 60 * 24) {
+    if (userPo == null) {
       // 删除token
       tokenRepository.delete(tokenPo)
       return null
     }
 
-    val newToken = tokenPo.copy(updatedAt = now)
+    // 更新登录时间
+    val newUserPo = userPo.copy(lastLoginAt = Instant.now())
+    userRepository.save(newUserPo)
 
-    tokenRepository.save(newToken)
-
-    return AuthUser(newToken, userPo)
+    return AuthUser(tokenPo, userPo)
   }
 
   @Transactional
@@ -53,11 +52,12 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
 
     val tokenId = TokenUtils.generateToken()
 
-    val date = Instant.now()
+    val now = Instant.now()
 
-    val token = TokenPo(null, tokenId, user.id!!, date, date)
+    val token = TokenPo(tokenId, user.id!!, now)
 
-    tokenRepository.save(token)
+    // 七天过期
+    tokenRepository.save(token, Duration.ofDays(7))
     return tokenId
   }
 }

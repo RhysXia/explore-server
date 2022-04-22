@@ -45,7 +45,7 @@ CREATE TABLE sys_user
     bio           TEXT,
     created_at    TIMESTAMP   NOT NULL,
     updated_at    TIMESTAMP   NOT NULL,
-    last_login_at TIMESTAMP   NOT NULL
+    last_login_at TIMESTAMP
 );
 
 -- ----------------------------
@@ -57,19 +57,6 @@ CREATE TABLE rel_user_role
     id      SERIAL PRIMARY KEY,
     user_id int4 NOT NULL,
     role_id int4 NOT NULL
-);
-
--- ----------------------------
--- Token
--- ----------------------------
-DROP TABLE IF EXISTS sys_token;
-CREATE TABLE sys_token
-(
-    id         SERIAL PRIMARY KEY,
-    token      VARCHAR(255) NOT NULL,
-    user_id    int4         NOT NULL,
-    created_at TIMESTAMP    NOT NULL,
-    updated_at TIMESTAMP    NOT NULL
 );
 
 -- ----------------------------

@@ -24,5 +24,6 @@ data class UserPo(
 
   val createdAt: Instant,
   val updatedAt: Instant,
-  val lastLoginAt: Instant,
+
+  val lastLoginAt: Instant?,
 )

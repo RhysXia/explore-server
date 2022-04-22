@@ -16,7 +16,10 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
 class DatabaseInitializer {
 
   @Bean
-  fun initializer(connectionFactory: ConnectionFactory): ConnectionFactoryInitializer {
+  fun initializer(
+    connectionFactory: ConnectionFactory,
+    dynamicDataInitializer: DynamicDataInitializer
+  ): ConnectionFactoryInitializer {
     val initializer = ConnectionFactoryInitializer()
     initializer.setConnectionFactory(connectionFactory)
     val populator = CompositeDatabasePopulator(
@@ -31,10 +34,12 @@ class DatabaseInitializer {
           println(row)
         } catch (e: Exception) {
           populator.populate(it).awaitSingleOrNull()
+          dynamicDataInitializer.initialize()
         }
         return@mono null
       }
     }
     return initializer
   }
+
 }

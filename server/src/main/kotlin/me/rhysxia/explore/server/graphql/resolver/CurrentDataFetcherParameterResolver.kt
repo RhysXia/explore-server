@@ -49,7 +49,7 @@ class CurrentDataFetcherParameterResolver(private val tokenService: TokenService
       }
 
       if (token !== null && token.isNotBlank()) {
-        val authUser = tokenService.findAuthUserByToken(token)
+        val authUser = tokenService.findCurrentUserByToken(token)
         val isUser = (parameter.type.javaType as Class<*>).isAssignableFrom(UserPo::class.java)
 
         if (authUser !== null) {
