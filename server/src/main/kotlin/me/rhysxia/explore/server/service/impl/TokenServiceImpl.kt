@@ -1,8 +1,10 @@
 package me.rhysxia.explore.server.service.impl
 
 import me.rhysxia.explore.server.dto.AuthUser
+import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.exception.ParameterException
 import me.rhysxia.explore.server.po.TokenPo
+import me.rhysxia.explore.server.po.UserStatus
 import me.rhysxia.explore.server.repository.TokenRepository
 import me.rhysxia.explore.server.repository.UserRepository
 import me.rhysxia.explore.server.service.TokenService
@@ -48,6 +50,10 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
 
     if (!PasswordUtils.match(password, user.password)) {
       throw ParameterException("用户名或者密码不正确")
+    }
+
+    if (user.status !== UserStatus.ACTIVATED) {
+      throw AuthenticationException("用户状态错误")
     }
 
     val tokenId = TokenUtils.generateToken()
