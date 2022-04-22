@@ -47,7 +47,7 @@ type User {
     updatedAt: Timestamp!,
 
     """上次登录时间"""
-    lastLoginAt: Timestamp!,
+    lastLoginAt: Timestamp,
 
     """用户下的文章"""
     articles(offset: Int = 0, limit: Int = 10, sort: [Order!]):[Article!]!

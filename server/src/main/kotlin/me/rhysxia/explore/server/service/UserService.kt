@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import me.rhysxia.explore.server.po.UserPo
 
 interface UserService {
-  fun findAllById(ids: Set<Long>): Flow<UserPo>
+  fun findAllByIds(ids: Set<Long>): Flow<UserPo>
 
 
 }

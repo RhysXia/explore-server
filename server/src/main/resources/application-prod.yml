@@ -11,3 +11,8 @@ spring:
     host: localhost
     port: 6379
     password:
+    lettuce:
+      pool:
+        enabled: true
+        max-active: 10
+        min-idle: 4
