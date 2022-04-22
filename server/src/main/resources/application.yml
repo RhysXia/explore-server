@@ -1,11 +1,9 @@
 spring:
-  r2dbc:
-    pool:
-      enabled: true
-      max-size: 10
-      initial-size: 4
   profiles:
     active: dev
+    group:
+      dev: dev,dev-local
+      prod: prod,prod-local
 graphql:
   schema:
     location: classpath*:/graphql/**/*.graphql*
