@@ -46,7 +46,7 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
     }
 
     @Transactional
-    override suspend fun login(username: String, password: String): String {
+    override suspend fun login(username: String, password: String): AuthUser {
         val user = userRepository.findByUsername(username) ?: throw ParameterException("用户名或者密码不正确")
 
         if (!PasswordUtils.match(password, user.password)) {
@@ -65,6 +65,6 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
 
         // 七天过期
         tokenRepository.save(token, Duration.ofDays(7))
-        return tokenId
+        return AuthUser(token, user)
     }
 }

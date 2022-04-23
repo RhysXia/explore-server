@@ -9,7 +9,7 @@ interface TokenService {
      */
     suspend fun findCurrentUserByToken(token: String): AuthUser?
 
-    suspend fun login(username: String, password: String): String
+    suspend fun login(username: String, password: String): AuthUser
 
     suspend fun logout(token: TokenPo)
 }

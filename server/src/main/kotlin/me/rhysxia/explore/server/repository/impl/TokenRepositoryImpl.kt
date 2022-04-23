@@ -25,11 +25,11 @@ class TokenRepositoryImpl(private val redisTemplate: ReactiveRedisTemplate<Strin
     }
 
     override suspend fun save(tokenPo: TokenPo, expireTime: Duration) {
-        redisTemplate.opsForValue().set(this.genKey(tokenPo.token), tokenPo, expireTime).awaitSingle()
+        redisTemplate.opsForValue().set(this.genKey(tokenPo.id), tokenPo, expireTime).awaitSingle()
     }
 
     override suspend fun delete(tokenPo: TokenPo) {
-        redisTemplate.opsForValue().delete(this.genKey(tokenPo.token)).awaitSingle()
+        redisTemplate.opsForValue().delete(this.genKey(tokenPo.id)).awaitSingle()
     }
 
     private fun genKey(key: String): String {

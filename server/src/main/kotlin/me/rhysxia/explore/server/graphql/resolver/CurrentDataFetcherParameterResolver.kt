@@ -2,9 +2,11 @@ package me.rhysxia.explore.server.graphql.resolver
 
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.mono
 import me.rhysxia.explore.autoconfigure.graphql.getRequestContainer
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlDataFetcherParameterResolver
+import me.rhysxia.explore.server.dto.AuthUser
 import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.po.TokenPo
 import me.rhysxia.explore.server.po.UserPo
@@ -19,6 +21,11 @@ import kotlin.reflect.jvm.javaType
 @Component
 class CurrentDataFetcherParameterResolver(private val tokenService: TokenService) :
     GraphqlDataFetcherParameterResolver<Any> {
+
+    companion object {
+        val SESSION_KEY = "__CURRENT_USER__"
+    }
+
     override fun support(parameter: KParameter): Boolean {
         val currentUser = parameter.findAnnotation<CurrentUser>()
         if (currentUser === null) {
@@ -48,16 +55,20 @@ class CurrentDataFetcherParameterResolver(private val tokenService: TokenService
                 token = requestContainer.getQueryParam("token")
             }
 
-            if (token !== null && token.isNotBlank()) {
-                val authUser = tokenService.findCurrentUserByToken(token)
+            val authUser = if (token !== null && token.isNotBlank()) {
+                tokenService.findCurrentUserByToken(token)
+            } else {
+                val session = requestContainer.session.awaitSingle()
+                session.attributes[SESSION_KEY] as AuthUser?
+            }
+
+            if (authUser !== null) {
                 val isUser = (parameter.type.javaType as Class<*>).isAssignableFrom(UserPo::class.java)
 
-                if (authUser !== null) {
-                    if (isUser) {
-                        return@mono authUser.user
-                    } else {
-                        return@mono authUser.token
-                    }
+                if (isUser) {
+                    return@mono authUser.user
+                } else {
+                    return@mono authUser.token
                 }
             }
 
