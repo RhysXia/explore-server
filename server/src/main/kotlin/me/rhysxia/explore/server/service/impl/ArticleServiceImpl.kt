@@ -30,7 +30,7 @@ class ArticleServiceImpl(private val articleRepository: ArticleRepository) : Art
         return articleRepository.findAllById(ids)
     }
 
-  override fun findAllByAuthorId(authorId: Long, pageable: Pageable): Flow<ArticlePo> {
-    return articleRepository.findAllByAuthorId(authorId, pageable)
-  }
+    override fun findAllByAuthorId(authorId: Long, pageable: Pageable): Flow<ArticlePo> {
+        return articleRepository.findAllByAuthorId(authorId, pageable)
+    }
 }

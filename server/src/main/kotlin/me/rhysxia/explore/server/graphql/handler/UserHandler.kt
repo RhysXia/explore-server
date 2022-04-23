@@ -14,17 +14,16 @@ import org.springframework.data.domain.Pageable
 
 @GraphqlData("User")
 class UserHandler(
-  private val categoryService: CategoryService,
-  private val tagService: TagService,
-  private val articleService: ArticleService,
-  private val commentService: CommentService
+    private val categoryService: CategoryService,
+    private val tagService: TagService,
+    private val articleService: ArticleService,
+    private val commentService: CommentService
 ) {
 
-  @GraphqlHandler
-  fun articles(pageable: Pageable, dfe: DataFetchingEnvironment): Flow<ArticlePo> {
-    val user = dfe.getSource<UserPo>()
-    return articleService.findAllByAuthorId(user.id!!, pageable)
-  }
-
+    @GraphqlHandler
+    fun articles(pageable: Pageable, dfe: DataFetchingEnvironment): Flow<ArticlePo> {
+        val user = dfe.getSource<UserPo>()
+        return articleService.findAllByAuthorId(user.id!!, pageable)
+    }
 
 }

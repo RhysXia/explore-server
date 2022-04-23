@@ -18,54 +18,54 @@ import kotlin.reflect.jvm.javaType
 
 @Component
 class CurrentDataFetcherParameterResolver(private val tokenService: TokenService) :
-  GraphqlDataFetcherParameterResolver<Any> {
-  override fun support(parameter: KParameter): Boolean {
-    val currentUser = parameter.findAnnotation<CurrentUser>()
-    if (currentUser === null) {
-      return false
-    }
-
-    val javaType = parameter.type.javaType
-
-    if (javaType !is Class<*>) {
-      return false
-    }
-
-    return javaType.isAssignableFrom(UserPo::class.java) || javaType.isAssignableFrom(TokenPo::class.java)
-  }
-
-  override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<Any> {
-    return mono(Dispatchers.Unconfined) {
-      val ctx = dfe.graphQlContext
-
-      val requestContainer = ctx.getRequestContainer()
-
-      var token = requestContainer.headers.getFirst(HttpHeaders.AUTHORIZATION)
-
-      val currentUser = parameter.findAnnotation<CurrentUser>()!!
-
-      if (token.isNullOrBlank()) {
-        token = requestContainer.getQueryParam("token")
-      }
-
-      if (token !== null && token.isNotBlank()) {
-        val authUser = tokenService.findCurrentUserByToken(token)
-        val isUser = (parameter.type.javaType as Class<*>).isAssignableFrom(UserPo::class.java)
-
-        if (authUser !== null) {
-          if (isUser) {
-            return@mono authUser.user
-          } else {
-            return@mono authUser.token
-          }
+    GraphqlDataFetcherParameterResolver<Any> {
+    override fun support(parameter: KParameter): Boolean {
+        val currentUser = parameter.findAnnotation<CurrentUser>()
+        if (currentUser === null) {
+            return false
         }
-      }
 
-      if (currentUser.required || !parameter.type.isMarkedNullable) {
-        throw AuthenticationException("Current Request is not authenticated.")
-      }
-      return@mono null
+        val javaType = parameter.type.javaType
 
+        if (javaType !is Class<*>) {
+            return false
+        }
+
+        return javaType.isAssignableFrom(UserPo::class.java) || javaType.isAssignableFrom(TokenPo::class.java)
     }
-  }
+
+    override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<Any> {
+        return mono(Dispatchers.Unconfined) {
+            val ctx = dfe.graphQlContext
+
+            val requestContainer = ctx.getRequestContainer()
+
+            var token = requestContainer.headers.getFirst(HttpHeaders.AUTHORIZATION)
+
+            val currentUser = parameter.findAnnotation<CurrentUser>()!!
+
+            if (token.isNullOrBlank()) {
+                token = requestContainer.getQueryParam("token")
+            }
+
+            if (token !== null && token.isNotBlank()) {
+                val authUser = tokenService.findCurrentUserByToken(token)
+                val isUser = (parameter.type.javaType as Class<*>).isAssignableFrom(UserPo::class.java)
+
+                if (authUser !== null) {
+                    if (isUser) {
+                        return@mono authUser.user
+                    } else {
+                        return@mono authUser.token
+                    }
+                }
+            }
+
+            if (currentUser.required || !parameter.type.isMarkedNullable) {
+                throw AuthenticationException("Current Request is not authenticated.")
+            }
+            return@mono null
+
+        }
+    }
 }

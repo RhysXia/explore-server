@@ -11,33 +11,33 @@ import org.dataloader.MappedBatchLoader
 import java.util.concurrent.CompletableFuture
 
 class GraphqlExecutionProcessor(
-  private val graphql: GraphQL,
-  private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
-  private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
+    private val graphql: GraphQL,
+    private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
+    private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
 ) {
-  fun doExecute(
-    graphqlRequestBody: GraphqlRequestBody,
-    handleCtx: (ctx: GraphQLContext.Builder) -> Unit
-  ): CompletableFuture<ExecutionResult> {
-    val dataLoaderRegister = DataLoaderRegistry()
+    fun doExecute(
+        graphqlRequestBody: GraphqlRequestBody,
+        handleCtx: (ctx: GraphQLContext.Builder) -> Unit
+    ): CompletableFuture<ExecutionResult> {
+        val dataLoaderRegister = DataLoaderRegistry()
 
-    batchLoaderMap.forEach { (key, value) ->
-      dataLoaderRegister.register(key, DataLoaderFactory.newDataLoader(value))
-    }
-
-    mappedBatchLoaderMap.forEach { (key, value) ->
-      dataLoaderRegister.register(key, DataLoaderFactory.newMappedDataLoader(value))
-    }
-
-    val executionInput =
-      ExecutionInput.newExecutionInput().query(graphqlRequestBody.query).variables(graphqlRequestBody.variables)
-        .operationName(graphqlRequestBody.operationName).extensions(graphqlRequestBody.extensions)
-        .dataLoaderRegistry(dataLoaderRegister)
-        .graphQLContext {
-          handleCtx(it)
+        batchLoaderMap.forEach { (key, value) ->
+            dataLoaderRegister.register(key, DataLoaderFactory.newDataLoader(value))
         }
-        .build()
 
-    return graphql.executeAsync(executionInput)
-  }
+        mappedBatchLoaderMap.forEach { (key, value) ->
+            dataLoaderRegister.register(key, DataLoaderFactory.newMappedDataLoader(value))
+        }
+
+        val executionInput =
+            ExecutionInput.newExecutionInput().query(graphqlRequestBody.query).variables(graphqlRequestBody.variables)
+                .operationName(graphqlRequestBody.operationName).extensions(graphqlRequestBody.extensions)
+                .dataLoaderRegistry(dataLoaderRegister)
+                .graphQLContext {
+                    handleCtx(it)
+                }
+                .build()
+
+        return graphql.executeAsync(executionInput)
+    }
 }

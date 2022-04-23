@@ -9,19 +9,19 @@ import org.springframework.stereotype.Service
 
 @Service
 class TagServiceImpl(private val tagRepository: TagRepository) : TagService {
-  override suspend fun count(): Long {
-    return tagRepository.count()
-  }
+    override suspend fun count(): Long {
+        return tagRepository.count()
+    }
 
-  override fun findAllBy(pageable: Pageable): Flow<TagPo> {
-    return tagRepository.findAllBy(pageable)
-  }
+    override fun findAllBy(pageable: Pageable): Flow<TagPo> {
+        return tagRepository.findAllBy(pageable)
+    }
 
-  override fun findAllByArticleId(articleId: Long): Flow<TagPo> {
-    return tagRepository.findAllByArticleId(articleId)
-  }
+    override fun findAllByArticleId(articleId: Long): Flow<TagPo> {
+        return tagRepository.findAllByArticleId(articleId)
+    }
 
-  override fun findAllById(ids: MutableSet<Long>): Flow<TagPo> {
-    return tagRepository.findAllById(ids)
-  }
+    override fun findAllById(ids: MutableSet<Long>): Flow<TagPo> {
+        return tagRepository.findAllById(ids)
+    }
 }

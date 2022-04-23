@@ -12,24 +12,24 @@ import kotlin.reflect.jvm.javaType
 
 @Component
 class PageableDataFetcherParameterResolver : GraphqlDataFetcherParameterResolver<Pageable> {
-  override fun support(parameter: KParameter): Boolean {
-    val javaType = parameter.type.javaType
+    override fun support(parameter: KParameter): Boolean {
+        val javaType = parameter.type.javaType
 
-    if (javaType is Class<*>) {
-      return javaType.isAssignableFrom(Pageable::class.java)
+        if (javaType is Class<*>) {
+            return javaType.isAssignableFrom(Pageable::class.java)
+        }
+
+        return false
     }
 
-    return false
-  }
+    override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<Pageable> {
 
-  override fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<Pageable> {
+        val offset = dfe.getArgumentOrDefault("offset", 0L)
+        val limit = dfe.getArgumentOrDefault("limit", 10)
+        val sort = dfe.getArgumentOrDefault("sort", Sort.unsorted())
 
-    val offset = dfe.getArgumentOrDefault("offset", 0L)
-    val limit = dfe.getArgumentOrDefault("limit", 10)
-    val sort = dfe.getArgumentOrDefault("sort", Sort.unsorted())
+        val pageable = OffsetPage(offset, limit, sort)
 
-    val pageable = OffsetPage(offset, limit, sort)
-
-    return Mono.just(pageable)
-  }
+        return Mono.just(pageable)
+    }
 }

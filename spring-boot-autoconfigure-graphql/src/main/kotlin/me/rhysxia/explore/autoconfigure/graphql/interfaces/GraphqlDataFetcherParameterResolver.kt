@@ -5,6 +5,6 @@ import reactor.core.publisher.Mono
 import kotlin.reflect.KParameter
 
 interface GraphqlDataFetcherParameterResolver<T : Any> {
-  fun support(parameter: KParameter): Boolean
-  fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<T>
+    fun support(parameter: KParameter): Boolean
+    fun resolve(dfe: DataFetchingEnvironment, parameter: KParameter): Mono<T>
 }

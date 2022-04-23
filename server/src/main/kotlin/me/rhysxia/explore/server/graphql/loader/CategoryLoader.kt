@@ -10,7 +10,7 @@ import me.rhysxia.explore.server.service.CategoryService
 @GraphqlLoader("category")
 class CategoryLoader(private val categoryService: CategoryService) : GraphqlMappedBatchLoader<Long, CategoryPo> {
 
-  override fun load(keys: Set<Long>): Flow<Pair<Long, CategoryPo>> {
-    return categoryService.findAllById(keys).map { it.id!! to it }
-  }
+    override fun load(keys: Set<Long>): Flow<Pair<Long, CategoryPo>> {
+        return categoryService.findAllById(keys).map { it.id!! to it }
+    }
 }

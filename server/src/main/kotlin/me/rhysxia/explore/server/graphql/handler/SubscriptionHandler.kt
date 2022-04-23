@@ -9,12 +9,12 @@ import me.rhysxia.explore.server.service.CategoryService
 @GraphqlSubscription
 class SubscriptionHandler(private val categoryService: CategoryService) {
 
-  @GraphqlHandler
-  fun message() = flow<String> {
-    for (i in 0..10) {
-      emit(i.toString())
-      delay(2000)
+    @GraphqlHandler
+    fun message() = flow<String> {
+        for (i in 0..10) {
+            emit(i.toString())
+            delay(2000)
+        }
     }
-  }
 
 }

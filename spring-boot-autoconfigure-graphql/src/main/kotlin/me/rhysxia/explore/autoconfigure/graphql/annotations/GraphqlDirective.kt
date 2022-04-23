@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component
 @MustBeDocumented
 @Component
 annotation class GraphqlDirective(
-  /**
-   * directive名称，不传表示对所有地方生效
-   */
-  val name: String = "",
+    /**
+     * directive名称，不传表示对所有地方生效
+     */
+    val name: String = "",
 )

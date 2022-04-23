@@ -4,6 +4,6 @@ package me.rhysxia.explore.autoconfigure.graphql.annotations
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class GraphqlHandler(
-  val parentType: String = "",
-  val fieldName: String = ""
+    val parentType: String = "",
+    val fieldName: String = ""
 )

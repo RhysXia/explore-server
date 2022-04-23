@@ -9,15 +9,15 @@ import org.springframework.stereotype.Service
 
 @Service
 class CategoryServiceImpl(private val categoryRepository: CategoryRepository) : CategoryService {
-  override fun findAllById(ids: Set<Long>): Flow<CategoryPo> {
-    return categoryRepository.findAllById(ids)
-  }
+    override fun findAllById(ids: Set<Long>): Flow<CategoryPo> {
+        return categoryRepository.findAllById(ids)
+    }
 
-  override fun findAllBy(pageable: Pageable): Flow<CategoryPo> {
-    return categoryRepository.findAllBy(pageable)
-  }
+    override fun findAllBy(pageable: Pageable): Flow<CategoryPo> {
+        return categoryRepository.findAllBy(pageable)
+    }
 
-  override suspend fun count(): Long {
-    return categoryRepository.count()
-  }
+    override suspend fun count(): Long {
+        return categoryRepository.count()
+    }
 }

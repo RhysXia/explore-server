@@ -12,24 +12,24 @@ import me.rhysxia.explore.server.service.TokenService
 @GraphqlMutation
 class MutationHandler(private val tokenService: TokenService) {
 
-  @GraphqlHandler
-  suspend fun login(
-    @CurrentUser currentUser: UserPo?,
-    @GraphqlInput("username") username: String,
-    @GraphqlInput("password") password: String
-  ): String {
-    if (currentUser !== null) {
-      throw AuthenticationException("用户已登录，请勿重复登录")
+    @GraphqlHandler
+    suspend fun login(
+        @CurrentUser currentUser: UserPo?,
+        @GraphqlInput("username") username: String,
+        @GraphqlInput("password") password: String
+    ): String {
+        if (currentUser !== null) {
+            throw AuthenticationException("用户已登录，请勿重复登录")
+        }
+        return tokenService.login(username, password)
     }
-    return tokenService.login(username, password)
-  }
 
-  @GraphqlHandler
-  suspend fun logout(
-    @CurrentUser token: TokenPo,
-  ): Boolean {
-    tokenService.logout(token)
-    return true
-  }
+    @GraphqlHandler
+    suspend fun logout(
+        @CurrentUser token: TokenPo,
+    ): Boolean {
+        tokenService.logout(token)
+        return true
+    }
 
 }

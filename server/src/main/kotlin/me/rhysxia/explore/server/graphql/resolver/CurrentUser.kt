@@ -4,5 +4,5 @@ package me.rhysxia.explore.server.graphql.resolver
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class CurrentUser(
-  val required: Boolean = false,
+    val required: Boolean = false,
 )

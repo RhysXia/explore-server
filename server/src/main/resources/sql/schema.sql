@@ -3,7 +3,8 @@
 -- ----------------------------
 DROP TABLE IF EXISTS sys_info;
 
-CREATE TABLE sys_info(
+CREATE TABLE sys_info
+(
     version VARCHAR(255) not null
 );
 
@@ -43,7 +44,7 @@ CREATE TABLE sys_user
     email         VARCHAR(255),
     status        VARCHAR(20) NOT NULL,
     bio           TEXT,
-    created_at    TIMESTAMP   NOT NULL,
+    created_at    TIMESTAMP   NULL,
     updated_at    TIMESTAMP   NOT NULL,
     last_login_at TIMESTAMP
 );

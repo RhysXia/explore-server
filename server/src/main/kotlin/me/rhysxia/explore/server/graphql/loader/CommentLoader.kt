@@ -9,7 +9,7 @@ import me.rhysxia.explore.server.service.CommentService
 
 @GraphqlLoader("comment")
 class CommentLoader(private val commentService: CommentService) : GraphqlMappedBatchLoader<Long, CommentPo> {
-  override fun load(ids: Set<Long>): Flow<Pair<Long, CommentPo>> {
-    return commentService.findAllById(ids).map { it.id!! to it }
-  }
+    override fun load(ids: Set<Long>): Flow<Pair<Long, CommentPo>> {
+        return commentService.findAllById(ids).map { it.id!! to it }
+    }
 }

@@ -13,21 +13,21 @@ import org.springframework.data.domain.Pageable
 
 @GraphqlData("Category")
 class CategoryHandler(
-  private val categoryService: CategoryService,
-  private val tagService: TagService,
-  private val articleService: ArticleService
+    private val categoryService: CategoryService,
+    private val tagService: TagService,
+    private val articleService: ArticleService
 ) {
 
-  @GraphqlHandler
-  fun articles(pageable: Pageable, dfe: DataFetchingEnvironment): Flow<ArticlePo> {
-    val category = dfe.getSource<CategoryPo>()
-    return articleService.findAllByCategoryId(category.id!!, pageable)
-  }
+    @GraphqlHandler
+    fun articles(pageable: Pageable, dfe: DataFetchingEnvironment): Flow<ArticlePo> {
+        val category = dfe.getSource<CategoryPo>()
+        return articleService.findAllByCategoryId(category.id!!, pageable)
+    }
 
-  @GraphqlHandler
-  suspend fun articleCount(dfe: DataFetchingEnvironment): Long {
-    val category = dfe.getSource<CategoryPo>()
-    return articleService.countByCategoryId(category.id!!)
-  }
+    @GraphqlHandler
+    suspend fun articleCount(dfe: DataFetchingEnvironment): Long {
+        val category = dfe.getSource<CategoryPo>()
+        return articleService.countByCategoryId(category.id!!)
+    }
 
 }

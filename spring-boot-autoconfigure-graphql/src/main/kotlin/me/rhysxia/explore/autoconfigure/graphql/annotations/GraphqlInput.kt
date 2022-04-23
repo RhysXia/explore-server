@@ -7,5 +7,5 @@ import org.springframework.stereotype.Component
 @MustBeDocumented
 @Component
 annotation class GraphqlInput(
-  val name: String
+    val name: String
 )

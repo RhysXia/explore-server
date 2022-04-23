@@ -9,26 +9,26 @@ import org.springframework.stereotype.Service
 
 @Service
 class CommentServiceImpl(private val commentRepository: CommentRepository) : CommentService {
-  override fun findAllByArticleIdAndParentId(articleId: Long, parentId: Long?, pageable: Pageable): Flow<CommentPo> {
-    return commentRepository.findAllByArticleIdAndParentId(articleId, parentId, pageable)
-  }
+    override fun findAllByArticleIdAndParentId(articleId: Long, parentId: Long?, pageable: Pageable): Flow<CommentPo> {
+        return commentRepository.findAllByArticleIdAndParentId(articleId, parentId, pageable)
+    }
 
-  override suspend fun countByArticleId(articleId: Long): Long {
-    return commentRepository.countByArticleId(articleId)
-  }
+    override suspend fun countByArticleId(articleId: Long): Long {
+        return commentRepository.countByArticleId(articleId)
+    }
 
-  override fun findAllByArticleId(articleId: Long, pageable: Pageable): Flow<CommentPo> {
-    return commentRepository.findAllByArticleId(articleId, pageable)
-  }
+    override fun findAllByArticleId(articleId: Long, pageable: Pageable): Flow<CommentPo> {
+        return commentRepository.findAllByArticleId(articleId, pageable)
+    }
 
-  override suspend fun countByArticleIdAndParentId(articleId: Long, parentId: Long?): Long {
-    return commentRepository.countByArticleIdAndParentId(articleId, parentId)
+    override suspend fun countByArticleIdAndParentId(articleId: Long, parentId: Long?): Long {
+        return commentRepository.countByArticleIdAndParentId(articleId, parentId)
 
-  }
+    }
 
-  override fun findAllById(ids: Set<Long>): Flow<CommentPo> {
-    return commentRepository.findAllById(ids)
+    override fun findAllById(ids: Set<Long>): Flow<CommentPo> {
+        return commentRepository.findAllById(ids)
 
-  }
+    }
 
 }

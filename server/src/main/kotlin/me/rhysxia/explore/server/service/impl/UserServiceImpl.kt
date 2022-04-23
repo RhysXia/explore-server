@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class UserServiceImpl(private val userRepository: UserRepository) : UserService {
-  override fun findAllByIds(ids: Set<Long>): Flow<UserPo> {
-    return userRepository.findAllById(ids)
-  }
+    override fun findAllByIds(ids: Set<Long>): Flow<UserPo> {
+        return userRepository.findAllById(ids)
+    }
 }

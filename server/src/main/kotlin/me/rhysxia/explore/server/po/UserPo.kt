@@ -6,24 +6,24 @@ import java.time.Instant
 
 @Table("sys_user")
 data class UserPo(
-  @Id
-  val id: Long?,
-  val username: String,
-  val password: String,
-  val nickname: String,
-  val avatar: String?,
-  val email: String?,
-  /**
-   * 状态
-   */
-  val status: UserStatus,
-  /**
-   * 个人简介
-   */
-  val bio: String?,
+    @Id
+    val id: Long?,
+    val username: String,
+    val password: String,
+    val nickname: String,
+    val avatar: String?,
+    val email: String?,
+    /**
+     * 状态
+     */
+    val status: UserStatus,
+    /**
+     * 个人简介
+     */
+    val bio: String?,
 
-  val createdAt: Instant,
-  val updatedAt: Instant,
+    val createdAt: Instant,
+    val updatedAt: Instant,
 
-  val lastLoginAt: Instant?,
+    val lastLoginAt: Instant?,
 )

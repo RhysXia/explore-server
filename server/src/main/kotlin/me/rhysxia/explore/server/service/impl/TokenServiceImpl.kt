@@ -37,7 +37,7 @@ class TokenServiceImpl(private val tokenRepository: TokenRepository, private val
 
         userRepository.save(newUserPo)
 
-        return AuthUser(tokenPo, userPo)
+        return AuthUser(tokenPo, newUserPo)
     }
 
     @Transactional

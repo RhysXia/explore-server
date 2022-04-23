@@ -18,47 +18,47 @@ import java.util.concurrent.CompletableFuture
 
 @GraphqlData("Article")
 class ArticleHandler(
-  private val categoryService: CategoryService,
-  private val tagService: TagService,
-  private val articleService: ArticleService,
-  private val commentService: CommentService
+    private val categoryService: CategoryService,
+    private val tagService: TagService,
+    private val articleService: ArticleService,
+    private val commentService: CommentService
 ) {
 
-  @GraphqlHandler
-  fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
-    val article = dfe.getSource<ArticlePo>()
-    return dfe.getDataLoader<Long, CategoryPo>("category").load(article.id!!)
-  }
-
-  @GraphqlHandler
-  fun tags(dfe: DataFetchingEnvironment): Flow<TagPo> {
-    val article = dfe.getSource<ArticlePo>()
-    return tagService.findAllByArticleId(article.id!!)
-  }
-
-  @GraphqlHandler
-  fun comments(
-    @GraphqlInput("top") top: Boolean,
-    pageable: Pageable,
-    dfe: DataFetchingEnvironment
-  ): Flow<CommentPo> {
-    val article = dfe.getSource<ArticlePo>()
-    if (top) {
-      return commentService.findAllByArticleId(article.id!!, pageable)
+    @GraphqlHandler
+    fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
+        val article = dfe.getSource<ArticlePo>()
+        return dfe.getDataLoader<Long, CategoryPo>("category").load(article.id!!)
     }
-    return commentService.findAllByArticleIdAndParentId(article.id!!, null, pageable)
-  }
 
-  @GraphqlHandler
-  suspend fun commentCount(
-    @GraphqlInput("top") top: Boolean,
-    dfe: DataFetchingEnvironment
-  ): Long {
-    val article = dfe.getSource<ArticlePo>()
-    if (top) {
-      return commentService.countByArticleId(article.id!!)
+    @GraphqlHandler
+    fun tags(dfe: DataFetchingEnvironment): Flow<TagPo> {
+        val article = dfe.getSource<ArticlePo>()
+        return tagService.findAllByArticleId(article.id!!)
     }
-    return commentService.countByArticleIdAndParentId(article.id!!, null)
-  }
+
+    @GraphqlHandler
+    fun comments(
+        @GraphqlInput("top") top: Boolean,
+        pageable: Pageable,
+        dfe: DataFetchingEnvironment
+    ): Flow<CommentPo> {
+        val article = dfe.getSource<ArticlePo>()
+        if (top) {
+            return commentService.findAllByArticleId(article.id!!, pageable)
+        }
+        return commentService.findAllByArticleIdAndParentId(article.id!!, null, pageable)
+    }
+
+    @GraphqlHandler
+    suspend fun commentCount(
+        @GraphqlInput("top") top: Boolean,
+        dfe: DataFetchingEnvironment
+    ): Long {
+        val article = dfe.getSource<ArticlePo>()
+        if (top) {
+            return commentService.countByArticleId(article.id!!)
+        }
+        return commentService.countByArticleIdAndParentId(article.id!!, null)
+    }
 
 }

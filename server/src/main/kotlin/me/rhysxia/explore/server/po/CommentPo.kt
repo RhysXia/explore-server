@@ -6,13 +6,13 @@ import java.time.Instant
 
 @Table("comment")
 data class CommentPo(
-  @Id
-  val id: Long?,
-  val content: String,
-  val contentType: ContentType,
-  val createdAt: Instant,
-  val updatedAt: Instant,
-  val authorId: Long,
-  val articleId: Long,
-  val parentId: Long?
+    @Id
+    val id: Long?,
+    val content: String,
+    val contentType: ContentType,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val authorId: Long,
+    val articleId: Long,
+    val parentId: Long?
 )

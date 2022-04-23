@@ -7,8 +7,8 @@ import org.springframework.data.repository.kotlin.CoroutineSortingRepository
 
 interface CommentRepository : CoroutineSortingRepository<CommentPo, Long> {
 
-  fun findAllByArticleIdAndParentId(articleId: Long, parentId: Long?, pageable: Pageable): Flow<CommentPo>
-  fun findAllByArticleId(articleId: Long, pageable: Pageable): Flow<CommentPo>
-  suspend fun countByArticleIdAndParentId(articleId: Long, parentId: Long?): Long
-  suspend fun countByArticleId(articleId: Long): Long
+    fun findAllByArticleIdAndParentId(articleId: Long, parentId: Long?, pageable: Pageable): Flow<CommentPo>
+    fun findAllByArticleId(articleId: Long, pageable: Pageable): Flow<CommentPo>
+    suspend fun countByArticleIdAndParentId(articleId: Long, parentId: Long?): Long
+    suspend fun countByArticleId(articleId: Long): Long
 }

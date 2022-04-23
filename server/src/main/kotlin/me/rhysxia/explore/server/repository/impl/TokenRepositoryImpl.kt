@@ -10,31 +10,31 @@ import java.time.Duration
 
 @Repository
 class TokenRepositoryImpl(private val redisTemplate: ReactiveRedisTemplate<String, TokenPo>) :
-  TokenRepository {
+    TokenRepository {
 
-  private final val KEY_PREFIX = TokenRepositoryImpl::class.qualifiedName
+    private final val KEY_PREFIX = TokenRepositoryImpl::class.qualifiedName
 
-  override suspend fun findOneById(id: String, expireTime: Duration): TokenPo? {
-    val value = redisTemplate.opsForValue().getAndExpire(this.genKey(id), expireTime).awaitSingleOrNull()
-    return value as TokenPo?
-  }
+    override suspend fun findOneById(id: String, expireTime: Duration): TokenPo? {
+        val value = redisTemplate.opsForValue().getAndExpire(this.genKey(id), expireTime).awaitSingleOrNull()
+        return value as TokenPo?
+    }
 
-  override suspend fun findOneById(id: String): TokenPo? {
-    val value = redisTemplate.opsForValue().get(this.genKey(id)).awaitSingle()
-    return value as TokenPo?
-  }
+    override suspend fun findOneById(id: String): TokenPo? {
+        val value = redisTemplate.opsForValue().get(this.genKey(id)).awaitSingle()
+        return value as TokenPo?
+    }
 
-  override suspend fun save(tokenPo: TokenPo, expireTime: Duration) {
-    redisTemplate.opsForValue().set(this.genKey(tokenPo.token), tokenPo, expireTime).awaitSingle()
-  }
+    override suspend fun save(tokenPo: TokenPo, expireTime: Duration) {
+        redisTemplate.opsForValue().set(this.genKey(tokenPo.token), tokenPo, expireTime).awaitSingle()
+    }
 
-  override suspend fun delete(tokenPo: TokenPo) {
-    redisTemplate.opsForValue().delete(this.genKey(tokenPo.token)).awaitSingle()
-  }
+    override suspend fun delete(tokenPo: TokenPo) {
+        redisTemplate.opsForValue().delete(this.genKey(tokenPo.token)).awaitSingle()
+    }
 
-  private fun genKey(key: String): String {
-    return KEY_PREFIX + '_' + key
-  }
+    private fun genKey(key: String): String {
+        return KEY_PREFIX + '_' + key
+    }
 
 
 }

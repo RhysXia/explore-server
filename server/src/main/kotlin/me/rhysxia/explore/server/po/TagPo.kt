@@ -6,9 +6,9 @@ import java.time.Instant
 
 @Table("tag")
 data class TagPo(
-  @Id
-  val id: Long?,
-  val name: String,
-  val createdAt: Instant,
-  val updatedAt: Instant,
+    @Id
+    val id: Long?,
+    val name: String,
+    val createdAt: Instant,
+    val updatedAt: Instant,
 )
