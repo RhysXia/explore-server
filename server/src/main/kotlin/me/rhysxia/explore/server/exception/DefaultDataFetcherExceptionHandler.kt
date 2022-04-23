@@ -6,12 +6,20 @@ import graphql.execution.DataFetcherExceptionHandlerResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import java.lang.reflect.InvocationTargetException
+import java.util.concurrent.CompletableFuture
 
 @Component
 class DefaultDataFetcherExceptionHandler : DataFetcherExceptionHandler {
     private val logger: Logger = LoggerFactory.getLogger(DefaultDataFetcherExceptionHandler::class.java)
-    override fun onException(handlerParameters: DataFetcherExceptionHandlerParameters): DataFetcherExceptionHandlerResult {
-        val exception = handlerParameters.exception
+
+    override fun handleException(handlerParameters: DataFetcherExceptionHandlerParameters): CompletableFuture<DataFetcherExceptionHandlerResult> {
+        var exception = handlerParameters.exception
+
+        if (exception is InvocationTargetException) {
+            exception = exception.targetException
+        }
+
         logger.error(
             "Exception while executing data fetcher for ${handlerParameters.path}: ${exception.message}",
             exception
@@ -41,9 +49,13 @@ class DefaultDataFetcherExceptionHandler : DataFetcherExceptionHandler {
             .message("%s", exception.message)
             .build()
 
-        return DataFetcherExceptionHandlerResult.newResult()
+        val result = DataFetcherExceptionHandlerResult.newResult()
             .error(graphqlError)
             .build()
+
+        return CompletableFuture.completedFuture(result)
     }
+
+
 }
 
