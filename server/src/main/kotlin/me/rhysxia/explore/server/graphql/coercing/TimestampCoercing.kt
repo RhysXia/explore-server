@@ -1,15 +1,13 @@
-package me.rhysxia.explore.server.graphql.scalar
+package me.rhysxia.explore.server.graphql.coercing
 
 import graphql.language.IntValue
 import graphql.schema.Coercing
 import graphql.schema.CoercingParseLiteralException
 import graphql.schema.CoercingParseValueException
 import graphql.schema.CoercingSerializeException
-import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlScalar
 import java.time.Instant
 
-@GraphqlScalar("Timestamp")
-class TimestampScalar : Coercing<Instant, Long> {
+class TimestampCoercing : Coercing<Instant, Long> {
     override fun serialize(dataFetcherResult: Any): Long {
         return if (dataFetcherResult is Instant) {
             dataFetcherResult.toEpochMilli()

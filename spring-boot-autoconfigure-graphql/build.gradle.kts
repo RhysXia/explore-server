@@ -3,5 +3,5 @@ dependencies {
   implementation("org.springframework:spring-webflux")
   implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-  api("com.graphql-java:graphql-java:17.3")
+  api("com.graphql-java:graphql-java:18.0")
 }

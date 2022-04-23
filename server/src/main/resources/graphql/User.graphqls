@@ -50,5 +50,5 @@ type User {
     lastLoginAt: Timestamp,
 
     """用户下的文章"""
-    articles(offset: Int = 0, limit: Int = 10, sort: [Order!]):[Article!]!
+    articles(offset: Long = 0, limit: Int = 10, sort: [Order!]):[Article!]!
 }

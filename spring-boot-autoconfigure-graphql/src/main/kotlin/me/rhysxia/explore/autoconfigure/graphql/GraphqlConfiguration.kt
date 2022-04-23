@@ -277,30 +277,6 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         return codeRegistry.build()
     }
 
-    @Bean
-    fun scalars(coercingList: List<Coercing<*, *>>): List<GraphQLScalarType> {
-        return coercingList.mapNotNull {
-            val graphqlScalar = AnnotationUtils.findAnnotation(it::class.java, GraphqlScalar::class.java)
-
-            if (graphqlScalar === null) {
-                logger.debug(
-                    "Bean '%s' does not have annotation '%s'.",
-                    it.javaClass.canonicalName,
-                    GraphqlScalar::class.qualifiedName
-                )
-                return@mapNotNull null
-            }
-
-            val name = graphqlScalar.name
-
-            if (name.isBlank()) {
-                logger.error("Bean '%s' should has a name, but be blank.", it::class.qualifiedName)
-                return@mapNotNull null
-            }
-
-            GraphQLScalarType.newScalar().name(name).coercing(it).build()
-        }
-    }
 
     @Bean
     fun graphql(
@@ -309,7 +285,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         instrumentations: List<Instrumentation>,
         directives: List<SchemaDirectiveWiring>,
         dataFetcherExceptionHandler: DataFetcherExceptionHandler?,
-        @Suppress("SpringJavaInjectionPointsAutowiringInspection") graphqlFieldVisibility: GraphqlFieldVisibility?
+        graphqlFieldVisibility: GraphqlFieldVisibility?
     ): GraphQL {
         val schemaParser = SchemaParser()
 

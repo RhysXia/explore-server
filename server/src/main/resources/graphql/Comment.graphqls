@@ -16,7 +16,7 @@ type Comment {
     """父级评论"""
     parent: Comment,
     """下级评论，仅直接下级，支持分页排序"""
-    children(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Comment!]!,
+    children(offset: Long = 0, limit: Int = 10, sort: [Order!]): [Comment!]!,
     """下级评论综述，仅直接下级"""
     childrenCount: Int!
 }

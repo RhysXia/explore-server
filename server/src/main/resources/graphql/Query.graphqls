@@ -2,11 +2,11 @@ type Query {
     """获取当前用户"""
     currentUser: User
     """文章分类列表，支持分页排序"""
-    categories(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Category!]!
+    categories(offset: Long = 0, limit: Int = 10, sort: [Order!]): [Category!]!
     """文章分类总数"""
     categoryCount: Int!
     """文章标签列表，支持分页排序"""
-    tags(offset: Int = 0, limit: Int = 10, sort: [Order!]): [Tag!]!
+    tags(offset: Long = 0, limit: Int = 10, sort: [Order!]): [Tag!]!
     """文章标签总数"""
     tagCount: Int!
     """指定id的文章"""
