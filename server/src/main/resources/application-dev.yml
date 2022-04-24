@@ -6,7 +6,7 @@ spring:
   r2dbc:
     username: root
     password: root
-    url: r2dbc:postgresql://localhost:3306/explore
+    url: r2dbc:postgresql://localhost:5432/explore
     pool:
       initial-size: 1
       max-size: 3
