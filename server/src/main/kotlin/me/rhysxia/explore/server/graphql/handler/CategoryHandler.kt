@@ -4,6 +4,7 @@ import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlQueryHandler
 import me.rhysxia.explore.server.graphql.resolver.CurrentUser
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.CategoryPo
@@ -20,12 +21,12 @@ class CategoryHandler(
     private val articleService: ArticleService
 ) {
 
-    @GraphqlHandler(parentType = "Query")
+    @GraphqlQueryHandler
     fun categories(@CurrentUser user: UserPo?, pageable: Pageable): Flow<CategoryPo> {
         return categoryService.findAllBy(pageable)
     }
 
-    @GraphqlHandler(parentType = "Query")
+    @GraphqlQueryHandler
     suspend fun categoryCount() = categoryService.count()
 
     @GraphqlHandler

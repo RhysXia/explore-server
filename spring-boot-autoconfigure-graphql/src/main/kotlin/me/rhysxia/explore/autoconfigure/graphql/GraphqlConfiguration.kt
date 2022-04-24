@@ -14,11 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.asFlux
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
 import me.rhysxia.explore.autoconfigure.graphql.exception.GraphqlTypeException
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlBatchLoader
@@ -33,15 +31,13 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import org.springframework.core.annotation.AnnotationUtils
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toFlux
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.stream.Stream
 import kotlin.reflect.KParameter
@@ -71,7 +67,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
     }
 
     private fun <T : Any> getGraphqlLoaderName(instance: T): String? {
-        val graphqlLoader = AnnotationUtils.findAnnotation(instance::class.java, GraphqlLoader::class.java)
+        val graphqlLoader = AnnotatedElementUtils.findMergedAnnotation(instance::class.java, GraphqlLoader::class.java)
         if (graphqlLoader === null) {
             return null
         }
@@ -87,10 +83,19 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
     }
 
     @Bean
-    fun <ID, Entity> graphqlMappedBatchLoaderMap(
+    fun <ID, Entity> mappedBatchLoaderMap(
+        mappedBatchLoaders: List<MappedBatchLoader<ID, Entity>>,
         graphqlMappedBatchLoaders: List<GraphqlMappedBatchLoader<ID, Entity>>,
-    ): Map<String, MappedBatchLoader<ID, Entity>> {
-        return graphqlMappedBatchLoaders.mapNotNull { graphqlMappedBatchLoader ->
+    ): List<MappedBatchLoaderWrapper<ID, Entity>> {
+        val list1 = mappedBatchLoaders.mapNotNull { mappedBatchLoader ->
+            val name = getGraphqlLoaderName(mappedBatchLoader)
+            if (name === null) {
+                return@mapNotNull null
+            }
+            MappedBatchLoaderWrapper(name, mappedBatchLoader)
+        }.toList()
+
+        val list2 = graphqlMappedBatchLoaders.mapNotNull { graphqlMappedBatchLoader ->
             val name = getGraphqlLoaderName(graphqlMappedBatchLoader)
 
             if (name === null) {
@@ -102,43 +107,26 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                     graphqlMappedBatchLoader.load(it).toList().toMap()
                 }
             }
-            name to loader
-        }.toMap()
+            MappedBatchLoaderWrapper(name, loader)
+        }.toList()
 
-
-    }
-
-    @Bean
-    fun <ID, Entity> mappedBatchLoaderMap(
-        mappedBatchLoaders: List<MappedBatchLoader<ID, Entity>>,
-    ): Map<String, MappedBatchLoader<ID, Entity>> {
-        return mappedBatchLoaders.mapNotNull { mappedBatchLoader ->
-            val name = getGraphqlLoaderName(mappedBatchLoader)
-            if (name === null) {
-                return@mapNotNull null
-            }
-            name to mappedBatchLoader
-        }.toMap()
+        return list1 + list2
     }
 
     @Bean
     fun <ID, Entity> batchLoaderMap(
         batchLoaders: List<BatchLoader<ID, Entity>>,
-    ): Map<String, BatchLoader<ID, Entity>> {
-        return batchLoaders.mapNotNull { batchLoader ->
+        graphqlBatchLoaders: List<GraphqlBatchLoader<ID, Entity>>,
+    ): List<BatchLoaderWrapper<ID, Entity>> {
+        val list1 = batchLoaders.mapNotNull { batchLoader ->
             val name = getGraphqlLoaderName(batchLoader)
             if (name === null) {
                 return@mapNotNull null
             }
-            name to batchLoader
-        }.toMap()
-    }
+            BatchLoaderWrapper(name, batchLoader)
+        }.toList()
 
-    @Bean
-    fun <ID, Entity> graphqlBatchLoaders(
-        graphqlBatchLoaders: List<GraphqlBatchLoader<ID, Entity>>,
-    ): Map<String, BatchLoader<ID, Entity>> {
-        return graphqlBatchLoaders.mapNotNull { graphqlBatchLoader ->
+        val list2 = graphqlBatchLoaders.mapNotNull { graphqlBatchLoader ->
             val name = getGraphqlLoaderName(graphqlBatchLoader)
             if (name === null) {
                 return@mapNotNull null
@@ -149,10 +137,13 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                     graphqlBatchLoader.load(it).toList()
                 }
             }
+            BatchLoaderWrapper(name, loader)
 
-            name to loader
-        }.toMap()
+        }.toList()
+
+        return list1 + list2
     }
+
 
     @Bean
     fun graphQLCodeRegistry(
@@ -164,7 +155,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         ctx.getBeansWithAnnotation(GraphqlData::class.java).forEach {
             val bean = it.value
 
-            val graphqlData = AnnotationUtils.findAnnotation(bean::class.java, GraphqlData::class.java)
+            val graphqlData = AnnotatedElementUtils.findMergedAnnotation(bean::class.java, GraphqlData::class.java)
 
             if (graphqlData === null) {
                 return@forEach
@@ -175,7 +166,8 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
             val dfeType = DataFetchingEnvironment::class.createType()
 
             bean::class.memberFunctions.forEach beanForEach@{ method ->
-                val graphqlHandler = AnnotationUtils.findAnnotation(method.javaMethod!!, GraphqlHandler::class.java)
+                val graphqlHandler =
+                    AnnotatedElementUtils.findMergedAnnotation(method.javaMethod!!, GraphqlHandler::class.java)
                 if (graphqlHandler === null) {
                     return@beanForEach
                 }
@@ -192,6 +184,10 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                         )
                     )
                 )
+
+                if (isSuspend && isFuture) {
+                    throw Exception("suspend and future can not be used together")
+                }
 
                 val callArgs: List<(dfe: DataFetchingEnvironment) -> Any?> = method.parameters.map { parameter ->
                     val type = parameter.type
@@ -219,24 +215,19 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                 val isSubscription = parentType == "Subscription"
 
                 codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
+                    val args = callArgs.map { fn -> fn(dfe) }.toTypedArray()
+                    if (isFuture) {
+                        return@DataFetcher method.call(*args)
+                    }
 
                     return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
-                        val args = callArgs.map { fn -> fn(dfe) }
-                            .map { arg -> if (arg is Mono<*>) arg.awaitSingleOrNull() else arg }.toTypedArray()
-
                         var result = (if (isSuspend) method.callSuspend(*args) else method.call(*args))
-
-                        if (isFuture) {
-                            val future = result as CompletableFuture<*>
-                            result = future.await()
-                        }
 
                         if (isSubscription) {
                             when (result) {
                                 is Flow<*> -> {
                                     @Suppress(
-                                        "UNCHECKED_CAST",
-                                        "ReactiveStreamsUnusedPublisher"
+                                        "UNCHECKED_CAST", "ReactiveStreamsUnusedPublisher"
                                     ) return@future (result as Flow<Any>).asFlux()
                                 }
                                 is Stream<*> -> {
@@ -294,7 +285,8 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         val runtimeWiring = RuntimeWiring.newRuntimeWiring().codeRegistry(codeRegistry)
 
         directives.forEach {
-            val graphqlDirective = AnnotationUtils.findAnnotation(it::class.java, GraphqlDirective::class.java)
+            val graphqlDirective =
+                AnnotatedElementUtils.findMergedAnnotation(it::class.java, GraphqlDirective::class.java)
             if (graphqlDirective !== null) {
                 val name = graphqlDirective.name
                 if (name.isNotBlank()) {
@@ -327,8 +319,12 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
     @Bean
     fun graphqlExecutionProcessor(
         graphql: GraphQL,
-        batchLoaderMap: Map<String, BatchLoader<*, *>>,
-        mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
-    ) = GraphqlExecutionProcessor(graphql, batchLoaderMap, mappedBatchLoaderMap)
+        batchLoaderWrappers: List<BatchLoaderWrapper<*, *>>,
+        mappedBatchLoaderWrappers: List<MappedBatchLoaderWrapper<*, *>>,
+    ) = GraphqlExecutionProcessor(graphql, batchLoaderWrappers, mappedBatchLoaderWrappers)
+
 
 }
+
+
+

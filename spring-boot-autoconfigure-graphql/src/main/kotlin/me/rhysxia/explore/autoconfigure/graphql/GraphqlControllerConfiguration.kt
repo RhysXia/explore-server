@@ -25,7 +25,6 @@ class GraphqlControllerConfiguration {
         )).nest {
             POST("") {
                 val req = it.awaitBody<GraphqlRequestBody>()
-
                 val er = graphqlExecutionProcessor.doExecute(req) { builder ->
                     builder.fromServerRequest(it)
                 }.toMono().awaitSingle()

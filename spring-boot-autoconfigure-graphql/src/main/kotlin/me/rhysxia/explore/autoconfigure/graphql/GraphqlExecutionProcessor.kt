@@ -4,16 +4,14 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.GraphQLContext
-import org.dataloader.BatchLoader
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
-import org.dataloader.MappedBatchLoader
 import java.util.concurrent.CompletableFuture
 
 class GraphqlExecutionProcessor(
     private val graphql: GraphQL,
-    private val batchLoaderMap: Map<String, BatchLoader<*, *>>,
-    private val mappedBatchLoaderMap: Map<String, MappedBatchLoader<*, *>>,
+    private val batchLoaderMap: List<BatchLoaderWrapper<*, *>>,
+    private val mappedBatchLoaderMap: List<MappedBatchLoaderWrapper<*, *>>,
 ) {
     fun doExecute(
         graphqlRequestBody: GraphqlRequestBody,

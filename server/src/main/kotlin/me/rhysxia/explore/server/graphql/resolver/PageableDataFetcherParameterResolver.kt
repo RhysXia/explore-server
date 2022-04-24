@@ -1,5 +1,6 @@
 package me.rhysxia.explore.server.graphql.resolver
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import graphql.schema.DataFetchingEnvironment
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlDataFetcherParameterResolver
 import me.rhysxia.explore.server.dto.OffsetPage
@@ -11,7 +12,8 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.javaType
 
 @Component
-class PageableDataFetcherParameterResolver : GraphqlDataFetcherParameterResolver<Pageable> {
+class PageableDataFetcherParameterResolver(private val objectMapper: ObjectMapper) :
+    GraphqlDataFetcherParameterResolver<Pageable> {
     override fun support(parameter: KParameter): Boolean {
         val javaType = parameter.type.javaType
 
@@ -26,7 +28,9 @@ class PageableDataFetcherParameterResolver : GraphqlDataFetcherParameterResolver
 
         val offset = dfe.getArgumentOrDefault("offset", 0L)
         val limit = dfe.getArgumentOrDefault("limit", 10)
-        val sort = dfe.getArgumentOrDefault("sort", Sort.unsorted())
+        val sortArg = dfe.getArgumentOrDefault<List<Map<String, Any>>>("sort", emptyList())
+
+        val sort = objectMapper.convertValue(sortArg, Sort::class.java)
 
         val pageable = OffsetPage(offset, limit, sort)
 

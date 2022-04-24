@@ -4,6 +4,7 @@ import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlQueryHandler
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.TagPo
 import me.rhysxia.explore.server.service.ArticleService
@@ -18,10 +19,10 @@ class TagHandler(
     private val articleService: ArticleService
 ) {
 
-    @GraphqlHandler(parentType = "Query")
+    @GraphqlQueryHandler
     fun tags(pageable: Pageable) = tagService.findAllBy(pageable)
 
-    @GraphqlHandler(parentType = "Query")
+    @GraphqlQueryHandler
     suspend fun tagCount() = tagService.count()
     @GraphqlHandler
     fun articles(pageable: Pageable, dfe: DataFetchingEnvironment): Flow<ArticlePo> {

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
 import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlInput
+import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlQueryHandler
 import me.rhysxia.explore.server.po.ArticlePo
 import me.rhysxia.explore.server.po.CategoryPo
 import me.rhysxia.explore.server.po.CommentPo
@@ -24,14 +25,14 @@ class ArticleHandler(
     private val commentService: CommentService
 ) {
 
-    @GraphqlHandler(parentType = "Query")
-    fun article(@GraphqlInput("id") id: Long, def: DataFetchingEnvironment): CompletableFuture<ArticlePo> {
-        val loader = def.getDataLoader<Long, ArticlePo>("article")
+    @GraphqlQueryHandler
+    fun article(@GraphqlInput("id") id: Long, def: DataFetchingEnvironment): CompletableFuture<ArticlePo?> {
+        val loader = def.getDataLoader<Long, ArticlePo?>("article")
         return loader.load(id)
     }
 
     @GraphqlHandler
-    fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
+    fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo?> {
         val article = dfe.getSource<ArticlePo>()
         return dfe.getDataLoader<Long, CategoryPo>("category").load(article.id!!)
     }

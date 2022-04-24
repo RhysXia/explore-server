@@ -3,9 +3,7 @@ package me.rhysxia.explore.server.graphql.handler
 import graphql.schema.DataFetchingEnvironment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactor.awaitSingle
-import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlData
-import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlHandler
-import me.rhysxia.explore.autoconfigure.graphql.annotations.GraphqlInput
+import me.rhysxia.explore.autoconfigure.graphql.annotations.*
 import me.rhysxia.explore.autoconfigure.graphql.getRequestContainer
 import me.rhysxia.explore.server.exception.AuthenticationException
 import me.rhysxia.explore.server.graphql.resolver.CurrentDataFetcherParameterResolver
@@ -24,7 +22,7 @@ class UserHandler(
     private val commentService: CommentService,
     private val tokenService: TokenService
 ) {
-    @GraphqlHandler(parentType = "Mutation")
+    @GraphqlMutationHandler
     suspend fun login(
         @CurrentUser currentUser: UserPo?,
         @GraphqlInput("username") username: String,
@@ -43,7 +41,7 @@ class UserHandler(
         return authUser.token.id
     }
 
-    @GraphqlHandler(parentType = "Mutation")
+    @GraphqlMutationHandler
     suspend fun logout(
         @CurrentUser token: TokenPo,
     ): Boolean {
@@ -51,7 +49,7 @@ class UserHandler(
         return true
     }
 
-    @GraphqlHandler(parentType = "Query")
+    @GraphqlQueryHandler
     fun currentUser(@CurrentUser user: UserPo) = user
 
     @GraphqlHandler
