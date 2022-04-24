@@ -28,9 +28,16 @@ class PageableDataFetcherParameterResolver(private val objectMapper: ObjectMappe
 
         val offset = dfe.getArgumentOrDefault("offset", 0L)
         val limit = dfe.getArgumentOrDefault("limit", 10)
-        val sortArg = dfe.getArgumentOrDefault<List<Map<String, Any>>>("sort", emptyList())
+        val orders = dfe.getArgumentOrDefault<List<Map<String, String>>>("sort", emptyList()).mapNotNull {
+            val property = it["property"]
+            val direction = it["direction"]
+            if (property === null || direction === null) {
+                return@mapNotNull null
+            }
+            Sort.Order(Sort.Direction.fromString(direction), property)
+        }
 
-        val sort = objectMapper.convertValue(sortArg, Sort::class.java)
+        val sort = Sort.by(orders)
 
         val pageable = OffsetPage(offset, limit, sort)
 

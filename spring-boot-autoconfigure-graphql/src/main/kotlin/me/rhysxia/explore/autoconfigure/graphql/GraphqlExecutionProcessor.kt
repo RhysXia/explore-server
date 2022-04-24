@@ -28,8 +28,12 @@ class GraphqlExecutionProcessor(
         }
 
         val executionInput =
-            ExecutionInput.newExecutionInput().query(graphqlRequestBody.query).variables(graphqlRequestBody.variables)
-                .operationName(graphqlRequestBody.operationName).extensions(graphqlRequestBody.extensions)
+            ExecutionInput
+                .newExecutionInput()
+                .query(graphqlRequestBody.query)
+                .variables(graphqlRequestBody.variables)
+                .operationName(graphqlRequestBody.operationName)
+                .extensions(graphqlRequestBody.extensions)
                 .dataLoaderRegistry(dataLoaderRegister)
                 .graphQLContext {
                     handleCtx(it)
@@ -37,5 +41,8 @@ class GraphqlExecutionProcessor(
                 .build()
 
         return graphql.executeAsync(executionInput)
+
     }
+
+
 }
