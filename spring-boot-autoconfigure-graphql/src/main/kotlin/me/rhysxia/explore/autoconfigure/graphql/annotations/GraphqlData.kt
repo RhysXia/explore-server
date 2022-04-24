@@ -7,5 +7,5 @@ import org.springframework.stereotype.Component
 @MustBeDocumented
 @Component
 annotation class GraphqlData(
-    val parentType: String,
+    val parentType: String = "",
 )

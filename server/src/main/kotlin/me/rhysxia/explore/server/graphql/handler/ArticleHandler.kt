@@ -24,6 +24,12 @@ class ArticleHandler(
     private val commentService: CommentService
 ) {
 
+    @GraphqlHandler(parentType = "Query")
+    fun article(@GraphqlInput("id") id: Long, def: DataFetchingEnvironment): CompletableFuture<ArticlePo> {
+        val loader = def.getDataLoader<Long, ArticlePo>("article")
+        return loader.load(id)
+    }
+
     @GraphqlHandler
     fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
         val article = dfe.getSource<ArticlePo>()

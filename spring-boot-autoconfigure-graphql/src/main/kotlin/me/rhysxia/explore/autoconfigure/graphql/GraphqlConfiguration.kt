@@ -170,7 +170,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                 return@forEach
             }
 
-            val rootParentType = graphqlData.parentType
+            val rootParentType = graphqlData.parentType.ifBlank { bean::class.simpleName }
 
             val dfeType = DataFetchingEnvironment::class.createType()
 
@@ -181,12 +181,6 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                 }
                 val parentType = graphqlHandler.parentType.ifBlank { rootParentType }
                 val fieldName = graphqlHandler.fieldName.ifBlank { method.name }
-
-                if (parentType.isBlank()) {
-                    logger.error(
-                        "GraphqlFetcher '%s' should have a parentType, but be blank.", method.javaClass.canonicalName
-                    )
-                }
 
                 val isSuspend = method.isSuspend
                 val isFuture = method.returnType.isSubtypeOf(

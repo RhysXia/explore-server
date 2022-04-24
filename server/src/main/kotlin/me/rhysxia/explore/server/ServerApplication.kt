@@ -7,15 +7,7 @@ import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 
 @SpringBootApplication
-class ServerApplication {
-
-    @Bean
-    fun tracingInstrumentation() = TracingInstrumentation()
-
-    @Bean
-    fun maxQueryComplexityInstrumentation() = MaxQueryComplexityInstrumentation(100)
-
-}
+class ServerApplication
 
 fun main(args: Array<String>) {
     runApplication<ServerApplication>(*args)

@@ -55,10 +55,16 @@ class CurrentDataFetcherParameterResolver(private val tokenService: TokenService
                 token = requestContainer.getQueryParam("token")
             }
 
+            val session = requestContainer.session.awaitSingle()
+
             val authUser = if (token !== null && token.isNotBlank()) {
-                tokenService.findCurrentUserByToken(token)
+                val user = session.attributes[SESSION_KEY] as AuthUser?
+                if(user !== null && user.token.id === token) {
+                    user
+                } else {
+                    tokenService.findCurrentUserByToken(token)
+                }
             } else {
-                val session = requestContainer.session.awaitSingle()
                 session.attributes[SESSION_KEY] as AuthUser?
             }
 

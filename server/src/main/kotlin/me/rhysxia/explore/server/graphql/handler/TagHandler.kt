@@ -18,6 +18,11 @@ class TagHandler(
     private val articleService: ArticleService
 ) {
 
+    @GraphqlHandler(parentType = "Query")
+    fun tags(pageable: Pageable) = tagService.findAllBy(pageable)
+
+    @GraphqlHandler(parentType = "Query")
+    suspend fun tagCount() = tagService.count()
     @GraphqlHandler
     fun articles(pageable: Pageable, dfe: DataFetchingEnvironment): Flow<ArticlePo> {
         val tag = dfe.getSource<TagPo>()
