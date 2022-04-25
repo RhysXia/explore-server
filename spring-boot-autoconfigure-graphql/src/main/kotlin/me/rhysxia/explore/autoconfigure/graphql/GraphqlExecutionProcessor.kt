@@ -4,6 +4,8 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.GraphQLContext
+import me.rhysxia.explore.autoconfigure.graphql.loader.BatchLoaderWrapper
+import me.rhysxia.explore.autoconfigure.graphql.loader.MappedBatchLoaderWrapper
 import org.dataloader.DataLoaderFactory
 import org.dataloader.DataLoaderRegistry
 import java.util.concurrent.CompletableFuture

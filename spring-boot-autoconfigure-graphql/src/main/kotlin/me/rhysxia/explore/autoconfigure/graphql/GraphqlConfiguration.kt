@@ -25,6 +25,8 @@ import me.rhysxia.explore.autoconfigure.graphql.execution.AsyncExecutionStrategy
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlBatchLoader
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlDataFetcherParameterResolver
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlMappedBatchLoader
+import me.rhysxia.explore.autoconfigure.graphql.loader.BatchLoaderWrapper
+import me.rhysxia.explore.autoconfigure.graphql.loader.MappedBatchLoaderWrapper
 import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.reactivestreams.Publisher
