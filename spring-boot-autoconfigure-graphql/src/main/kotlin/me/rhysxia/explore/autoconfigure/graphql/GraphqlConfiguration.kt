@@ -6,7 +6,6 @@ import graphql.execution.DataFetcherExceptionHandler
 import graphql.execution.SubscriptionExecutionStrategy
 import graphql.execution.instrumentation.ChainedInstrumentation
 import graphql.execution.instrumentation.Instrumentation
-import graphql.execution.instrumentation.dataloader.DataLoaderDispatcherInstrumentation
 import graphql.schema.*
 import graphql.schema.idl.*
 import graphql.schema.visibility.GraphqlFieldVisibility
@@ -22,7 +21,7 @@ import kotlinx.coroutines.reactor.asFlux
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import me.rhysxia.explore.autoconfigure.graphql.annotations.*
 import me.rhysxia.explore.autoconfigure.graphql.exception.GraphqlTypeException
-import me.rhysxia.explore.autoconfigure.graphql.instrumentation.CustomDataLoaderDispatchInstrumentation
+import me.rhysxia.explore.autoconfigure.graphql.execution.AsyncExecutionStrategy
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlBatchLoader
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlDataFetcherParameterResolver
 import me.rhysxia.explore.autoconfigure.graphql.interfaces.GraphqlMappedBatchLoader
@@ -30,7 +29,6 @@ import org.dataloader.BatchLoader
 import org.dataloader.MappedBatchLoader
 import org.reactivestreams.Publisher
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -217,14 +215,11 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
                 val isSubscription = parentType == "Subscription"
 
-                codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
 
+                codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
                     return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
-                        val args = callArgs
-                            .map { fn -> fn(dfe) }
-                            .map { arg ->
-                                if (arg is Mono<*>) arg.awaitSingleOrNull() else arg
-                            }.toTypedArray()
+                        val args = callArgs.map { fn -> fn(dfe) }
+                            .map { arg -> if (arg is Mono<*>) arg.awaitSingleOrNull() else arg }.toTypedArray()
 
                         var result = (if (isSuspend) method.callSuspend(*args) else method.call(*args))
 
@@ -271,9 +266,6 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         return codeRegistry.build()
     }
 
-    @Bean
-    @ConditionalOnMissingBean(DataLoaderDispatcherInstrumentation::class)
-    fun instrumentation() = CustomDataLoaderDispatchInstrumentation()
 
     @Bean
     fun graphql(
@@ -319,6 +311,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
         val schema = schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring.build())
         val graphqlBuilder = GraphQL.newGraphQL(schema).instrumentation(chainedInstrumentation)
+            .queryExecutionStrategy(AsyncExecutionStrategy())
             .subscriptionExecutionStrategy(SubscriptionExecutionStrategy())
 
         if (dataFetcherExceptionHandler !== null) {
