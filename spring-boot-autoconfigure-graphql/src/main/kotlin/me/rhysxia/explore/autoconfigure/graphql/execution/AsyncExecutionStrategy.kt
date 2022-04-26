@@ -92,22 +92,20 @@ class AsyncExecutionStrategy(exceptionHandler: DataFetcherExceptionHandler = Sim
 
         val futuresSize = futures.size
 
-        var start: Instant? = null
-        var loggerFlag = false
-
-        if (logger.isDebugEnabled) {
-            start = Instant.now()
-        }
-
         // 轮询发送请求，保证所有loader都被dispatch
         GlobalScope.launch {
+            var start: Instant? = null
+            if (logger.isWarnEnabled) {
+                start = Instant.now()
+            }
+            var loggerFlag = false
             while (!count.compareAndSet(futuresSize, 0)) {
                 delay(1)
                 dataLoaderRegistry.dispatchAll()
 
-                if (logger.isDebugEnabled && !loggerFlag) {
+                if (logger.isWarnEnabled && !loggerFlag) {
                     if (Instant.now().isAfter(start!!.plusSeconds(10))) {
-                        logger.debug("Some DataFetchers execute too long.")
+                        logger.warn("Some DataFetchers execute too long.")
                         loggerFlag = true
                     }
                 }
