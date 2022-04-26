@@ -101,7 +101,6 @@ class AsyncExecutionStrategy(exceptionHandler: DataFetcherExceptionHandler = Sim
 
         // 轮询发送请求，保证所有loader都被dispatch
         GlobalScope.launch {
-
             while (!count.compareAndSet(futuresSize, 0)) {
                 delay(1)
                 dataLoaderRegistry.dispatchAll()
@@ -112,9 +111,7 @@ class AsyncExecutionStrategy(exceptionHandler: DataFetcherExceptionHandler = Sim
                         loggerFlag = true
                     }
                 }
-
             }
-
         }
 
         return overallResult
