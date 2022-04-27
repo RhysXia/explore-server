@@ -4,7 +4,8 @@ import graphql.ExecutionResult
 import graphql.collect.ImmutableKit
 import graphql.execution.*
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionStrategyParameters
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
@@ -93,14 +94,15 @@ class AsyncExecutionStrategy(exceptionHandler: DataFetcherExceptionHandler = Sim
         val futuresSize = futures.size
 
         // 轮询发送请求，保证所有loader都被dispatch
-        GlobalScope.launch {
+        val job = CoroutineScope(Dispatchers.IO).launch {
             var start: Instant? = null
             if (logger.isWarnEnabled) {
                 start = Instant.now()
             }
             var loggerFlag = false
+          
             while (!count.compareAndSet(futuresSize, 0)) {
-                delay(1)
+                delay(10)
                 dataLoaderRegistry.dispatchAll()
 
                 if (logger.isWarnEnabled && !loggerFlag) {
@@ -112,6 +114,8 @@ class AsyncExecutionStrategy(exceptionHandler: DataFetcherExceptionHandler = Sim
             }
         }
 
-        return overallResult
+        return overallResult.whenComplete { _, _ ->
+            job.cancel()
+        }
     }
 }
