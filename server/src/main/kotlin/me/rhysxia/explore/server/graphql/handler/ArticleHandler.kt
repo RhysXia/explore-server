@@ -32,7 +32,7 @@ class ArticleHandler(
     }
 
     @GraphqlHandler
-    fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo?> {
+    fun category(dfe: DataFetchingEnvironment): CompletableFuture<CategoryPo> {
         val article = dfe.getSource<ArticlePo>()
         return dfe.getDataLoader<Long, CategoryPo>("category").load(article.id!!)
     }
