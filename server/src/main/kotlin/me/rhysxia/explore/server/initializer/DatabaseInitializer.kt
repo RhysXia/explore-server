@@ -1,6 +1,7 @@
 package me.rhysxia.explore.server.initializer
 
 import io.r2dbc.spi.ConnectionFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.reactor.mono
@@ -27,7 +28,7 @@ class DatabaseInitializer {
             ResourceDatabasePopulator(ClassPathResource("sql/data.sql"))
         )
         initializer.setDatabasePopulator {
-            mono {
+            mono(Dispatchers.IO) {
                 try {
                     val result = it.createStatement("SELECT version FROM sys_info LIMIT 1").execute().awaitSingle()
                     val row = result.map { t, _ -> t }.awaitSingle()
