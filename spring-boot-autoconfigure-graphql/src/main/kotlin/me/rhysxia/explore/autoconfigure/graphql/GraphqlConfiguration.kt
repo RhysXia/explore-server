@@ -9,9 +9,8 @@ import graphql.execution.instrumentation.Instrumentation
 import graphql.schema.*
 import graphql.schema.idl.*
 import graphql.schema.visibility.GraphqlFieldVisibility
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
@@ -54,7 +53,6 @@ import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.javaType
 import kotlin.streams.toList
 
-@DelicateCoroutinesApi
 @Configuration
 @EnableConfigurationProperties(GraphqlConfigurationProperties::class)
 @Import(value = [GraphqlControllerConfiguration::class, GraphqlWebSocketConfiguration::class])
@@ -110,7 +108,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
             }
 
             val loader = MappedBatchLoader<ID, Entity> {
-                GlobalScope.future(Dispatchers.Unconfined) {
+                CoroutineScope(Dispatchers.Unconfined).future {
                     graphqlMappedBatchLoader.load(it).toList().toMap()
                 }
             }
@@ -140,7 +138,7 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
             }
 
             val loader = BatchLoader<ID, Entity> {
-                GlobalScope.future(Dispatchers.Unconfined) {
+                CoroutineScope(Dispatchers.Unconfined).future {
                     graphqlBatchLoader.load(it).toList()
                 }
             }
@@ -203,8 +201,8 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
                     dataFetcherParameterResolvers.forEach { dfpr ->
                         if (dfpr.support(parameter)) {
-                            return@map @Suppress("ReactiveStreamsUnusedPublisher")
-                            fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, parameter)
+                            @Suppress("ReactiveStreamsUnusedPublisher")
+                            return@map fun(dfe: DataFetchingEnvironment) = dfpr.resolve(dfe, parameter)
                         }
                     }
 
@@ -217,9 +215,8 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
 
                 val isSubscription = parentType == "Subscription"
 
-
                 codeRegistry.dataFetcher(FieldCoordinates.coordinates(parentType, fieldName), DataFetcher { dfe ->
-                    return@DataFetcher GlobalScope.future(Dispatchers.Unconfined) {
+                    return@DataFetcher CoroutineScope(Dispatchers.Unconfined).future {
                         val args = callArgs.map { fn -> fn(dfe) }
                             .map { arg -> if (arg is Mono<*>) arg.awaitSingleOrNull() else arg }.toTypedArray()
 
@@ -234,10 +231,12 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
                                 is Flow<*> -> {
                                     @Suppress(
                                         "UNCHECKED_CAST", "ReactiveStreamsUnusedPublisher"
-                                    ) return@future (result as Flow<Any>).asFlux()
+                                    )
+                                    return@future (result as Flow<Any>).asFlux()
                                 }
                                 is Stream<*> -> {
-                                    @Suppress("ReactiveStreamsUnusedPublisher") return@future (result).toFlux()
+                                    @Suppress("ReactiveStreamsUnusedPublisher")
+                                    return@future (result).toFlux()
                                 }
                                 is Publisher<*> -> {
                                     return@future (result)
@@ -275,7 +274,9 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         scalars: List<GraphQLScalarType>,
         instrumentations: List<Instrumentation>,
         directives: List<SchemaDirectiveWiring>,
+        @Suppress("SpringJavaInjectionPointsAutowiringInspection")
         dataFetcherExceptionHandler: DataFetcherExceptionHandler?,
+        @Suppress("SpringJavaInjectionPointsAutowiringInspection")
         graphqlFieldVisibility: GraphqlFieldVisibility?
     ): GraphQL {
         val schemaParser = SchemaParser()
@@ -329,7 +330,6 @@ class GraphqlConfiguration(private val graphqlConfigurationProperties: GraphqlCo
         batchLoaderWrappers: List<BatchLoaderWrapper<*, *>>,
         mappedBatchLoaderWrappers: List<MappedBatchLoaderWrapper<*, *>>,
     ) = GraphqlExecutionProcessor(graphql, batchLoaderWrappers, mappedBatchLoaderWrappers)
-
 
 }
 
