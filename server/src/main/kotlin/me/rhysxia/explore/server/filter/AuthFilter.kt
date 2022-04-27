@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono
 @Component
 class AuthFilter(private val tokenService: TokenService) : WebFilter {
     companion object {
-        val SESSION_KEY = "__CURRENT_USER__"
+        const val SESSION_KEY = "__CURRENT_USER__"
     }
 
     override fun filter(exchange: ServerWebExchange, chain: WebFilterChain): Mono<Void> {
