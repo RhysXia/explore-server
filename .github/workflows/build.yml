@@ -44,7 +44,7 @@ jobs:
 
       - name: login to docker hub
         if: ${{ github.event_name == 'push' }}
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         # 配置登录信息，secrets 变量在 github settings -> secrets 中设置
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
